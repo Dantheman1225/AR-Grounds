@@ -1,0 +1,110 @@
+<!DOCTYPE html>
+<html lang="en" data-page="thank-you">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Quote Request Received | AR Grounds</title>
+  <meta name="description" content="Your quote request has been received. AR Grounds will reach out within 24 hours." />
+  <meta name="robots" content="noindex, nofollow" />
+  <meta name="theme-color" content="#0a1f12" />
+  <link rel="icon" href="assets/favicon.svg" type="image/svg+xml" />
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:ital,wght@0,600;0,700;0,800;0,900;1,700;1,800&family=Barlow:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="css/styles.css" />
+</head>
+<body class="thankyou-body">
+
+  <header class="site-header">
+    <div class="container nav-wrap">
+      <a href="index.html" class="brand" aria-label="AR Grounds home">
+        <div class="brand-icon">
+          <svg viewBox="0 0 40 40" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+            <rect width="40" height="40" rx="10" fill="#1a6b3c"/>
+            <path d="M10 30 Q20 10 30 30" stroke="#ffffff" stroke-width="3" stroke-linecap="round" fill="none"/>
+            <circle cx="20" cy="14" r="4" fill="#7fe8a2"/>
+          </svg>
+        </div>
+        <span class="brand-name">AR<em>Grounds</em></span>
+      </a>
+      <nav class="site-nav" aria-label="Primary navigation">
+        <button class="nav-toggle" aria-expanded="false" aria-controls="nav-menu">
+          <span></span><span></span><span></span>
+          <span class="sr-only">Toggle navigation</span>
+        </button>
+        <ul id="nav-menu" class="nav-menu">
+          <li><a href="services.html">Services</a></li>
+          <li><a href="gallery.html">Gallery</a></li>
+          <li><a href="index.html#process">How It Works</a></li>
+          <li><a href="index.html#areas">Service Area</a></li>
+          <li><a href="quote.html" class="nav-cta">Free Quote</a></li>
+        </ul>
+      </nav>
+    </div>
+  </header>
+
+  <main id="main" class="thankyou-main">
+
+    <div class="thankyou-card">
+      <!-- Animated checkmark -->
+      <div class="ty-check" aria-hidden="true">
+        <svg viewBox="0 0 60 60" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <circle cx="30" cy="30" r="29" stroke="#1a6b3c" stroke-width="2" class="ty-circle"/>
+          <path d="M18 30l9 9 15-15" stroke="#1a6b3c" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" class="ty-checkmark"/>
+        </svg>
+      </div>
+
+      <div class="ty-content">
+        <p class="eyebrow">Quote Request Received</p>
+        <h1>You're All Set!</h1>
+        <p class="ty-message">We've received your request and will reach out <strong>within 24 hours</strong> — usually the same day. Keep your phone nearby!</p>
+
+        <div class="ty-steps">
+          <div class="ty-step">
+            <div class="ty-step-num">1</div>
+            <div>
+              <strong>We Review Your Request</strong>
+              <span>We look over your info and prepare an accurate quote</span>
+            </div>
+          </div>
+          <div class="ty-step">
+            <div class="ty-step-num">2</div>
+            <div>
+              <strong>We Contact You</strong>
+              <span>Call or text from (501) 555-0123 — answer when you see it!</span>
+            </div>
+          </div>
+          <div class="ty-step">
+            <div class="ty-step-num">3</div>
+            <div>
+              <strong>We Get You Scheduled</strong>
+              <span>Pick a day that works and we'll show up and get it done</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="ty-contact-strip">
+          <p>Can't wait? Reach us now:</p>
+          <div class="ty-contact-btns">
+            <a href="tel:+15015550123" class="btn btn-primary">&#128222; Call (501) 555-0123</a>
+            <a href="sms:+15015550123" class="btn btn-outline">&#128172; Send a Text</a>
+          </div>
+        </div>
+
+        <a href="index.html" class="ty-home-link">&#8592; Back to Home</a>
+      </div>
+    </div>
+
+  </main>
+
+  <script src="js/main.js"></script>
+  <script>
+    // Read submitted name from sessionStorage if available
+    const name = sessionStorage.getItem('ar_submitted_name');
+    if (name) {
+      const h1 = document.querySelector('.ty-content h1');
+      if (h1) h1.textContent = `Thanks, ${name}!`;
+    }
+  </script>
+</body>
+</html>

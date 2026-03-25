@@ -1,0 +1,14 @@
+{
+  "name": "argrounds",
+  "version": "1.0.0",
+  "description": "AR Grounds — Pressure Washing Website",
+  "scripts": {
+    "dev": "npx wrangler pages dev . --port 8788",
+    "deploy": "npx wrangler pages deploy .",
+    "serve": "npx serve . -p 3000"
+  },
+  "devDependencies": {
+    "wrangler": "^3.0.0",
+    "serve": "^14.0.0"
+  }
+}
