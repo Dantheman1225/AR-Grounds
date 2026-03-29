@@ -1,5 +1,5 @@
 /* ================================================
-   AR Grounds — quote-form.js
+   Grounds Maintenance — quote-form.js
    Handles quote form validation & submission.
    Works on: quote.html, contact.html, gallery.html
    

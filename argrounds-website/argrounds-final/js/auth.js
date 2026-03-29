@@ -1,5 +1,5 @@
 /* ================================================
-   AR Grounds — auth.js
+   Grounds Maintenance — auth.js
    Supabase auth stub.
    
    TODO: Install @supabase/supabase-js via CDN or npm

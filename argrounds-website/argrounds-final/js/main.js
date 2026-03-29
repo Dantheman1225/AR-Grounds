@@ -1,4 +1,4 @@
-/* AR Grounds — main.js */
+/* Grounds Maintenance — main.js */
 
 // ── NAV TOGGLE ──────────────────────────────────────────────────────────────
 const navToggle = document.querySelector('.nav-toggle');
@@ -117,11 +117,11 @@ if (quoteForm) {
           showSuccess();
         } else {
           resetSubmit('Send My Free Quote Request');
-          alert('Something went wrong. Please call us at (501) 555-0123 or try again.');
+          alert('Something went wrong. Please call us at (501) 961-0788 or try again.');
         }
       } catch (err) {
         resetSubmit('Send My Free Quote Request');
-        alert('Network error. Please call us at (501) 555-0123 or try again.');
+        alert('Network error. Please call us at (501) 961-0788 or try again.');
       }
     } else {
       // Dev mode — simulate success after brief delay

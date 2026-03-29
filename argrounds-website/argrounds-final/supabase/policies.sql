@@ -1,5 +1,5 @@
 -- ================================================
--- AR Grounds — Supabase Row Level Security Policies
+-- Grounds Maintenance — Supabase Row Level Security Policies
 -- Run AFTER schema.sql
 -- ================================================
 

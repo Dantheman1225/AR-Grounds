@@ -1,5 +1,5 @@
 /* ================================================
-   AR Grounds — gallery.js
+   Grounds Maintenance — gallery.js
    Before/after gallery filter tabs
    ================================================ */
 

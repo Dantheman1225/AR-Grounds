@@ -1,4 +1,4 @@
-# AR Grounds Starter Site
+# Grounds Maintenance Starter Site
 
 This is a simple static starter site for **argrounds.com**.
 
@@ -33,7 +33,7 @@ argrounds-starter/
 
 ## What to replace first
 1. Replace the phone number everywhere in `index.html`.
-2. Replace `hello@argrounds.com` with your real email.
+2. Replace `grounds.helpme@gmail.com` with your real email.
 3. Replace `FORM_ID` in the quote form action with your real Formspree form ID.
 4. Replace the before/after placeholders with real photos.
 5. Update service areas if needed.
@@ -68,7 +68,7 @@ argrounds-starter/
 "Review this static website project for a local driveway and sidewalk cleaning business. Improve clarity, mobile conversion, and local-service trust signals without adding unnecessary complexity."
 
 ### Prompt 2 — homepage polish
-"Refine the homepage copy for AR Grounds. Keep the tone clean, direct, and conversion-focused. The business is starting with driveway cleaning, sidewalk cleaning, and bundled front concrete cleaning in Little Rock."
+"Refine the homepage copy for Grounds Maintenance. Keep the tone clean, direct, and conversion-focused. The business is starting with driveway cleaning, sidewalk cleaning, and bundled front concrete cleaning in Little Rock."
 
 ### Prompt 3 — image swap help
 "Replace the placeholder proof section with a three-card gallery using my uploaded before-and-after concrete cleaning images. Optimize image sizing and mobile layout."

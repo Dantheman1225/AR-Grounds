@@ -1,5 +1,5 @@
 -- ================================================
--- AR Grounds — Supabase Schema
+-- Grounds Maintenance — Supabase Schema
 -- Run in Supabase SQL Editor
 -- ================================================
 

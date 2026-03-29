@@ -1,5 +1,5 @@
 /* ================================================
-   AR Grounds — admin.js
+   Grounds Maintenance — admin.js
    Full CRUD admin UI using localStorage backend stub.
    Wire to real API by replacing localStorage calls
    with fetch('/api/...') calls.
