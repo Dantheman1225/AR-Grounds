@@ -16,6 +16,12 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:ital,wght@0,600;0,700;0,800;0,900;1,700;1,800&family=Barlow:wght@400;500;600;700&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="css/styles.css" />
+
+  <link rel="icon" href="/favicon.ico" sizes="any">
+  <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32x32.png">
+  <link rel="icon" type="image/png" sizes="16x16" href="/favicon-16x16.png">
+  <link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png">
+  <link rel="manifest" href="/site.webmanifest">
 </head>
 <body>
 
@@ -31,14 +37,7 @@
   <header class="site-header">
     <div class="container nav-wrap">
       <a href="#top" class="brand" aria-label="Grounds Maintenance home">
-        <div class="brand-icon">
-          <svg viewBox="0 0 40 40" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
-            <rect width="40" height="40" rx="10" fill="#1a6b3c"/>
-            <path d="M10 30 Q20 10 30 30" stroke="#ffffff" stroke-width="3" stroke-linecap="round" fill="none"/>
-            <circle cx="20" cy="14" r="4" fill="#7fe8a2"/>
-          </svg>
-        </div>
-        <span class="brand-name">Grounds</span>
+        <img src="assets/brand/logo.svg" alt="Grounds Maintenance" style="height: 48px; width: auto;" />
       </a>
 
       <nav class="site-nav" aria-label="Primary navigation">
@@ -61,9 +60,11 @@
 
     <!-- HERO -->
     <section class="hero" id="top">
-      <div class="hero-bg" aria-hidden="true">
-        <div class="hero-bg-grid"></div>
-        <div class="hero-bg-glow"></div>
+      <div class="hero-bg" aria-hidden="true" style="position: absolute; top: 0; left: 0; right: 0; bottom: 0; overflow: hidden; z-index: -1; background: #000;">
+        <video autoplay loop muted playsinline style="width: 100%; height: 100%; object-fit: cover; opacity: 0.35;">
+          <source src="assets/video/IMG_1926.mp4" type="video/mp4">
+        </video>
+        <div class="hero-bg-glow" style="position: absolute; inset: 0; background: linear-gradient(180deg, rgba(10,31,18,0) 20%, rgba(10,31,18,1) 100%);"></div>
       </div>
       <div class="container hero-grid">
         <div class="hero-copy">
@@ -223,57 +224,33 @@
         <div class="results-grid">
           <div class="result-card reveal-up">
             <div class="result-panels">
-              <div class="rp rp--before">
+              <div class="rp rp--before" style="background-image: url('assets/gallery/IMG_0359.webp'); background-size: cover; background-position: center;">
                 <span class="rp-label">BEFORE</span>
-                <div class="rp-body">
-                  <div class="rp-icon">&#128247;</div>
-                  <span>Add your before photo</span>
-                </div>
               </div>
-              <div class="rp rp--after">
+              <div class="rp rp--after" style="background-image: url('assets/gallery/IMG_0361.webp'); background-size: cover; background-position: center;">
                 <span class="rp-label">AFTER</span>
-                <div class="rp-body">
-                  <div class="rp-icon">&#10024;</div>
-                  <span>Add your after photo</span>
-                </div>
               </div>
             </div>
             <p class="result-label">Residential Driveway — Little Rock</p>
           </div>
           <div class="result-card reveal-up delay-1">
             <div class="result-panels">
-              <div class="rp rp--before">
+              <div class="rp rp--before" style="background-image: url('assets/gallery/IMG_0362.webp'); background-size: cover; background-position: center;">
                 <span class="rp-label">BEFORE</span>
-                <div class="rp-body">
-                  <div class="rp-icon">&#128247;</div>
-                  <span>Add your before photo</span>
-                </div>
               </div>
-              <div class="rp rp--after">
+              <div class="rp rp--after" style="background-image: url('assets/gallery/IMG_0363.webp'); background-size: cover; background-position: center;">
                 <span class="rp-label">AFTER</span>
-                <div class="rp-body">
-                  <div class="rp-icon">&#10024;</div>
-                  <span>Add your after photo</span>
-                </div>
               </div>
             </div>
             <p class="result-label">Front Walkway — North Little Rock</p>
           </div>
           <div class="result-card reveal-up delay-2">
             <div class="result-panels">
-              <div class="rp rp--before">
+              <div class="rp rp--before" style="background-image: url('assets/gallery/IMG_0366.webp'); background-size: cover; background-position: center;">
                 <span class="rp-label">BEFORE</span>
-                <div class="rp-body">
-                  <div class="rp-icon">&#128247;</div>
-                  <span>Add your before photo</span>
-                </div>
               </div>
-              <div class="rp rp--after">
+              <div class="rp rp--after" style="background-image: url('assets/gallery/IMG_0367.webp'); background-size: cover; background-position: center;">
                 <span class="rp-label">AFTER</span>
-                <div class="rp-body">
-                  <div class="rp-icon">&#10024;</div>
-                  <span>Add your after photo</span>
-                </div>
               </div>
             </div>
             <p class="result-label">Full Bundle — Sherwood</p>
@@ -483,15 +460,8 @@
   <footer class="site-footer">
     <div class="container footer-top">
       <div class="footer-brand">
-        <div class="brand-icon">
-          <svg viewBox="0 0 40 40" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
-            <rect width="40" height="40" rx="10" fill="#1a6b3c"/>
-            <path d="M10 30 Q20 10 30 30" stroke="#ffffff" stroke-width="3" stroke-linecap="round" fill="none"/>
-            <circle cx="20" cy="14" r="4" fill="#7fe8a2"/>
-          </svg>
-        </div>
+        <img src="assets/brand/Logo Full Size Landscape.png" alt="Grounds Maintenance" style="height: 54px; margin-bottom: 12px;" />
         <div>
-          <strong>Grounds Maintenance</strong>
           <p>Pressure washing for Central Arkansas homeowners. Driveways, sidewalks &amp; walkways done right.</p>
         </div>
       </div>
