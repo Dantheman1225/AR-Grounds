@@ -1114,9 +1114,18 @@ ul { list-style: none; margin: 0; padding: 0; }
 
 .footer-brand {
   display: flex;
+  flex-direction: column;
   gap: 16px;
   align-items: flex-start;
   flex-shrink: 0;
+}
+
+.footer-logo {
+  height: clamp(80px, 12vw, 110px);
+  width: auto;
+  margin-bottom: 24px;
+  filter: invert(1) brightness(1.5);
+  display: block;
 }
 .footer-brand strong {
   display: block;
