@@ -1117,12 +1117,12 @@ ul { list-style: none; margin: 0; padding: 0; }
   flex-direction: column;
   gap: 16px;
   align-items: flex-start;
-  flex-shrink: 0;
+  flex: 0 0 50%;
 }
 
 .footer-logo {
-  height: clamp(80px, 12vw, 110px);
-  width: auto;
+  width: 100%;
+  height: auto;
   margin-bottom: 24px;
   display: block;
 }
@@ -1134,7 +1134,7 @@ ul { list-style: none; margin: 0; padding: 0; }
   color: #fff;
   margin-bottom: 6px;
 }
-.footer-brand p { font-size: 0.85rem; color: rgba(255,255,255,0.5); max-width: 28ch; line-height: 1.6; }
+.footer-brand p { font-size: 0.85rem; color: rgba(255,255,255,0.5); max-width: 100%; line-height: 1.6; }
 
 .footer-cols {
   display: flex;
@@ -1266,6 +1266,7 @@ ul { list-style: none; margin: 0; padding: 0; }
   .trust-item { flex: 1 1 calc(50% - 8px); padding: 0; }
 
   .footer-top { flex-direction: column; gap: 40px; }
+  .footer-brand { flex: 0 0 auto; width: 100%; }
   .footer-cols { flex-wrap: wrap; gap: 32px; justify-content: flex-start; }
 }
 
@@ -1309,7 +1310,7 @@ ul { list-style: none; margin: 0; padding: 0; }
 
   .results-grid { grid-template-columns: 1fr 1fr; }
 
-  .footer-cols { gap: 24px; }
+  .footer-cols { flex-direction: column; gap: 32px; }
 }
 
 @media (max-width: 480px) {
