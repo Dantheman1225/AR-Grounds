@@ -586,6 +586,63 @@ ul { list-style: none; margin: 0; padding: 0; }
 }
 
 /* =============================================
+   SOCIAL STRIP
+   ============================================= */
+.social-strip {
+  background: var(--green-800);
+  padding: 20px 0;
+  color: rgba(255,255,255,0.7);
+  font-size: 0.95rem;
+  font-weight: 600;
+  position: relative;
+  z-index: 5;
+}
+.social-row {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 24px;
+  flex-wrap: wrap;
+}
+.social-row span {
+  font-family: var(--font-display);
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+}
+.social-links {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+.social-links a {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  background: rgba(255,255,255,0.08);
+  color: var(--white);
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  position: relative;
+}
+.social-links a svg {
+  width: 20px;
+  height: 20px;
+  fill: currentColor;
+  transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* Brand Hover Colors */
+.social-links a.social-fb:hover { background: #1877F2; color: #fff; transform: translateY(-4px); box-shadow: 0 6px 16px rgba(24, 119, 242, 0.35); }
+.social-links a.social-ig:hover { background: #E1306C; color: #fff; transform: translateY(-4px); box-shadow: 0 6px 16px rgba(225, 48, 108, 0.35); }
+.social-links a.social-tk:hover { background: #000000; color: #fff; transform: translateY(-4px); box-shadow: 0 6px 16px rgba(0, 0, 0, 0.35); border: 1px solid rgba(255,255,255,0.2); }
+.social-links a.social-yt:hover { background: #FF0000; color: #fff; transform: translateY(-4px); box-shadow: 0 6px 16px rgba(255, 0, 0, 0.35); }
+.social-links a.social-gm:hover { background: #EA4335; color: #fff; transform: translateY(-4px); box-shadow: 0 6px 16px rgba(234, 67, 53, 0.35); }
+
+.social-links a:hover svg { transform: scale(1.15); }
+
+/* =============================================
    TRUST STRIP
    ============================================= */
 .trust-strip {
