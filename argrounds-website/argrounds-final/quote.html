@@ -219,7 +219,7 @@
         <!-- RIGHT: Full Quote Form -->
         <div class="quote-form-wrap reveal-up delay-1">
           <form class="quote-form" id="quoteForm" novalidate data-redirect="thank-you.html">
-            <h2 class="form-title">Get My Free Quote</h2>
+            <h2 class="form-title" style="font-family: var(--font-display); font-size: 1.8rem; font-weight: 900; margin: 0 0 24px; color: var(--text);">Get My Free Quote</h2>
 
             <div class="form-row-2">
               <label class="form-field">
@@ -253,7 +253,12 @@
               <select name="service" required>
                 <option value="">— Choose a service —</option>
                 <option value="driveway">Driveway Cleaning</option>
-                <option value="sidewalk">Sidewalk Cleaning</option>
+                <option value="sidewalk">Sidewalk / Walkway Cleaning</option>
+                <option value="patio">Patio / Paver Cleaning</option>
+                <option value="deck">Deck Cleaning</option>
+                <option value="fence">Fence Cleaning</option>
+                <option value="porch">Porch / Entryway Cleaning</option>
+                <option value="storefront">Storefront / Entry Cleaning</option>
                 <option value="bundle">Driveway + Walkway Bundle (Best Value)</option>
                 <option value="unsure">Not sure — need a recommendation</option>
               </select>
@@ -263,10 +268,11 @@
               <span>Approximate Driveway Size</span>
               <select name="size">
                 <option value="">— Select a size —</option>
-                <option value="small">Small (1 car, single-lane)</option>
-                <option value="medium">Medium (2 cars, standard)</option>
-                <option value="large">Large (3+ cars or oversized)</option>
-                <option value="unsure">Not sure</option>
+                <option value="small">1-Car Driveway</option>
+                <option value="medium">2-Car Driveway</option>
+                <option value="large">3+ Car Driveway</option>
+                <option value="wrap">Wrap-around / Circle Driveway</option>
+                <option value="none">No Driveway / Just Sidewalks</option>
               </select>
             </label>
 
@@ -282,7 +288,7 @@
 
             <label class="form-field">
               <span>Notes (optional)</span>
-              <textarea name="message" rows="3" placeholder="Any stains, special concerns, or other info that will help us give you an accurate quote…"></textarea>
+              <textarea name="message" rows="3" placeholder="Any stains, special concerns, or other info that will help us give you an accurate quote..."></textarea>
             </label>
 
             <!-- Honeypot -->

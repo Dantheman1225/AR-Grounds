@@ -296,43 +296,96 @@
           </div>
         </div>
         <div class="quote-form-wrap reveal-up delay-1">
-          <p class="form-section-title">Get Your Free Quote</p>
-          <form class="quote-form" id="quoteForm" novalidate>
+          <form class="quote-form" id="quoteForm" novalidate data-redirect="thank-you.html">
+            <h2 class="form-title" style="font-family: var(--font-display); font-size: 1.8rem; font-weight: 900; margin: 0 0 24px; color: var(--text);">Get My Free Quote</h2>
+
             <div class="form-row-2">
               <label class="form-field">
-                <span>Full Name <em>*</em></span>
-                <input type="text" name="name" placeholder="Your full name" required autocomplete="name">
+                <span>First Name <em>*</em></span>
+                <input type="text" name="first_name" placeholder="John" required autocomplete="given-name">
               </label>
               <label class="form-field">
-                <span>Phone <em>*</em></span>
-                <input type="tel" name="phone" placeholder="(501) 000-0000" required autocomplete="tel">
+                <span>Last Name <em>*</em></span>
+                <input type="text" name="last_name" placeholder="Smith" required autocomplete="family-name">
               </label>
             </div>
+
+            <div class="form-row-2">
+              <label class="form-field">
+                <span>Phone Number <em>*</em></span>
+                <input type="tel" name="phone" placeholder="(501) 000-0000" required autocomplete="tel">
+              </label>
+              <label class="form-field">
+                <span>Email Address</span>
+                <input type="email" name="email" placeholder="you@email.com" autocomplete="email">
+              </label>
+            </div>
+
+            <label class="form-field">
+              <span>Property Address <em>*</em></span>
+              <input type="text" name="address" placeholder="123 Main St, Little Rock, AR 72201" required autocomplete="street-address">
+            </label>
+
             <label class="form-field">
               <span>Service Needed <em>*</em></span>
               <select name="service" required>
                 <option value="">— Choose a service —</option>
                 <option value="driveway">Driveway Cleaning</option>
-                <option value="sidewalk">Sidewalk Cleaning</option>
-                <option value="bundle">Driveway + Walkway Bundle</option>
-                <option value="unsure">Not sure — need recommendation</option>
+                <option value="sidewalk">Sidewalk / Walkway Cleaning</option>
+                <option value="patio">Patio / Paver Cleaning</option>
+                <option value="deck">Deck Cleaning</option>
+                <option value="fence">Fence Cleaning</option>
+                <option value="porch">Porch / Entryway Cleaning</option>
+                <option value="storefront">Storefront / Entry Cleaning</option>
+                <option value="bundle">Driveway + Walkway Bundle (Best Value)</option>
+                <option value="unsure">Not sure — need a recommendation</option>
               </select>
             </label>
+
+            <label class="form-field">
+              <span>Approximate Driveway Size</span>
+              <select name="size">
+                <option value="">— Select a size —</option>
+                <option value="small">1-Car Driveway</option>
+                <option value="medium">2-Car Driveway</option>
+                <option value="large">3+ Car Driveway</option>
+                <option value="wrap">Wrap-around / Circle Driveway</option>
+                <option value="none">No Driveway / Just Sidewalks</option>
+              </select>
+            </label>
+
+            <label class="form-field">
+              <span>Best Time to Reach You</span>
+              <select name="timing">
+                <option value="">— Any time works —</option>
+                <option value="morning">Morning (8am–12pm)</option>
+                <option value="afternoon">Afternoon (12pm–5pm)</option>
+                <option value="evening">Evening (5pm–7pm)</option>
+              </select>
+            </label>
+
+            <label class="form-field">
+              <span>Notes (optional)</span>
+              <textarea name="message" rows="3" placeholder="Any stains, special concerns, or other info that will help us give you an accurate quote..."></textarea>
+            </label>
+
+            <!-- Honeypot -->
             <input type="text" name="_gotcha" style="display:none" tabindex="-1" autocomplete="off">
+
             <button type="submit" class="btn btn-submit" id="submitBtn">
               <span class="submit-text">Send My Free Quote Request</span>
-              <svg viewBox="0 0 20 20" fill="none" aria-hidden="true">
-                <path d="M4 10h12M10 4l6 6-6 6" stroke="currentColor" stroke-width="2" stroke-linecap="round" />
-              </svg>
+              <svg viewBox="0 0 20 20" fill="none" aria-hidden="true"><path d="M4 10h12M10 4l6 6-6 6" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
             </button>
+
+            <p class="form-tip"><svg xmlns="http://www.w3.org/2000/svg" width="1em" height="1em" fill="currentColor" class="bi bi-lightning-charge" viewBox="0 0 16 16">
+  <path d="M11.251.068a.5.5 0 0 1 .227.58L9.677 6.5H13a.5.5 0 0 1 .364.843l-8 8.5a.5.5 0 0 1-.842-.49L6.323 9.5H3a.5.5 0 0 1-.364-.843l8-8.5a.5.5 0 0 1 .615-.09zM4.157 8.5H7a.5.5 0 0 1 .478.647L6.11 13.59l5.732-6.09H9a.5.5 0 0 1-.478-.647L9.89 2.41z"/>
+</svg> Fastest quote: text a photo of your concrete to <strong>(501) 961-0788</strong>.</p>
+
             <div class="form-success" id="formSuccess" aria-live="polite">
-              <svg viewBox="0 0 24 24" fill="none" aria-hidden="true">
-                <circle cx="12" cy="12" r="10" stroke="#1a6b3c" stroke-width="1.5" />
-                <path d="M8 12l3 3 5-5" stroke="#1a6b3c" stroke-width="1.5" stroke-linecap="round" />
-              </svg>
+              <svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><circle cx="12" cy="12" r="10" stroke="#1a6b3c" stroke-width="1.5"/><path d="M8 12l3 3 5-5" stroke="#1a6b3c" stroke-width="1.5" stroke-linecap="round"/></svg>
               <div>
                 <strong>Request Sent!</strong>
-                <p>We'll be in touch within 24 hours.</p>
+                <p>We'll reach out within 24 hours. You can also call or text: (501) 961-0788.</p>
               </div>
             </div>
           </form>
