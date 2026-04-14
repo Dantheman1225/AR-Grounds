@@ -1,10 +1,7 @@
-// functions/api/leads-list.js
-// GET /api/leads-list
-// Optional: ?status=new|quoted|booked|done
-
 import { createClient } from '@supabase/supabase-js';
 
-export async function onRequestGet({ request, env }) {
+// PUT /api/leads-update
+export async function onRequestPut({ request, env }) {
   try {
     if (!env.SUPABASE_URL || !env.SUPABASE_SERVICE_ROLE_KEY) {
       return new Response(JSON.stringify({ error: 'Database configuration missing.' }), { status: 500 });
@@ -24,26 +21,31 @@ export async function onRequestGet({ request, env }) {
       return new Response(JSON.stringify({ error: 'Unauthorized' }), { status: 401 });
     }
 
-    const url = new URL(request.url);
-    const status = url.searchParams.get('status');
-
-    let query = supabase.from('leads').select('*', { count: 'exact' }).order('created_at', { ascending: false });
-    if (status) {
-      query = query.eq('status', status);
+    const body = await request.json();
+    if (!body.id) {
+      return new Response(JSON.stringify({ error: 'Lead ID missing.' }), { status: 400 });
     }
 
-    const { data: leads, count, error } = await query;
+    const { id, ...updates } = body;
+
+    const { data, error } = await supabase
+      .from('leads')
+      .update(updates)
+      .eq('id', id)
+      .select()
+      .single();
+
     if (error) throw error;
 
-    return new Response(JSON.stringify({ leads, total: count }), {
+    return new Response(JSON.stringify({ success: true, lead: data }), {
       status: 200,
-      headers: { 
+      headers: {
         'Content-Type': 'application/json',
         'Access-Control-Allow-Origin': env.ALLOWED_ORIGIN || '*'
       },
     });
   } catch (err) {
-    console.error('List leads error:', err);
+    console.error('Update lead error:', err);
     return new Response(JSON.stringify({ error: 'Server error' }), { status: 500 });
   }
 }
@@ -52,7 +54,7 @@ export async function onRequestOptions({ env }) {
   return new Response(null, {
     headers: {
       'Access-Control-Allow-Origin': env.ALLOWED_ORIGIN || '*',
-      'Access-Control-Allow-Methods': 'GET, OPTIONS',
+      'Access-Control-Allow-Methods': 'PUT, OPTIONS',
       'Access-Control-Allow-Headers': 'Content-Type, Authorization',
     },
   });

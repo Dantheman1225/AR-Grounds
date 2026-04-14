@@ -61,98 +61,7 @@ if (floatBar && heroSection) {
   floatObserver.observe(heroSection);
 }
 
-// ── QUOTE FORM HANDLING ───────────────────────────────────────────────────────
-const quoteForm = document.getElementById('quoteForm');
-const submitBtn = document.getElementById('submitBtn');
-const formSuccess = document.getElementById('formSuccess');
 
-if (quoteForm) {
-  quoteForm.addEventListener('submit', async (e) => {
-    e.preventDefault();
-
-    // Basic client-side validation
-    const required = quoteForm.querySelectorAll('[required]');
-    let valid = true;
-    required.forEach((field) => {
-      field.classList.remove('field-error');
-      if (!field.value.trim()) {
-        field.classList.add('field-error');
-        valid = false;
-      }
-    });
-
-    if (!valid) {
-      const firstError = quoteForm.querySelector('.field-error');
-      if (firstError) {
-        firstError.focus();
-        firstError.scrollIntoView({ behavior: 'smooth', block: 'center' });
-      }
-      return;
-    }
-
-    // Check honeypot
-    const honeypot = quoteForm.querySelector('input[name="_gotcha"]');
-    if (honeypot && honeypot.value) return;
-
-    // Show loading state
-    if (submitBtn) {
-      submitBtn.disabled = true;
-      submitBtn.style.opacity = '0.7';
-      submitBtn.querySelector('.submit-text').textContent = 'Sending…';
-    }
-
-    const formData = new FormData(quoteForm);
-    const formspreeAction = quoteForm.getAttribute('action') || '';
-
-    // If Formspree ID is configured, submit there
-    if (formspreeAction && !formspreeAction.includes('YOUR_FORM_ID')) {
-      try {
-        const res = await fetch(formspreeAction, {
-          method: 'POST',
-          body: formData,
-          headers: { Accept: 'application/json' },
-        });
-
-        if (res.ok) {
-          showSuccess();
-        } else {
-          resetSubmit('Send My Free Quote Request');
-          alert('Something went wrong. Please call us at (501) 961-0788 or try again.');
-        }
-      } catch (err) {
-        resetSubmit('Send My Free Quote Request');
-        alert('Network error. Please call us at (501) 961-0788 or try again.');
-      }
-    } else {
-      // Dev mode — simulate success after brief delay
-      setTimeout(() => {
-        showSuccess();
-      }, 800);
-    }
-  });
-
-  function showSuccess() {
-    if (submitBtn) submitBtn.style.display = 'none';
-    if (formSuccess) {
-      formSuccess.classList.add('is-visible');
-      formSuccess.scrollIntoView({ behavior: 'smooth', block: 'center' });
-    }
-  }
-
-  function resetSubmit(label) {
-    if (submitBtn) {
-      submitBtn.disabled = false;
-      submitBtn.style.opacity = '1';
-      submitBtn.querySelector('.submit-text').textContent = label;
-    }
-  }
-
-  // Live field error clearing
-  quoteForm.querySelectorAll('input, select, textarea').forEach((field) => {
-    field.addEventListener('input', () => field.classList.remove('field-error'));
-    field.addEventListener('change', () => field.classList.remove('field-error'));
-  });
-}
 
 // ── SMOOTH SCROLL OFFSET (sticky header) ────────────────────────────────────
 document.querySelectorAll('a[href^="#"]').forEach((anchor) => {
@@ -168,7 +77,4 @@ document.querySelectorAll('a[href^="#"]').forEach((anchor) => {
   });
 });
 
-// ── FIELD ERROR STYLES (injected) ───────────────────────────────────────────
-const errorStyle = document.createElement('style');
-errorStyle.textContent = `.field-error { border-color: #e53e3e !important; background: #fff5f5 !important; }`;
-document.head.appendChild(errorStyle);
+

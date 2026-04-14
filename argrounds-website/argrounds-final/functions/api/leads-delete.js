@@ -1,10 +1,7 @@
-// functions/api/leads-list.js
-// GET /api/leads-list
-// Optional: ?status=new|quoted|booked|done
-
 import { createClient } from '@supabase/supabase-js';
 
-export async function onRequestGet({ request, env }) {
+// DELETE /api/leads-delete?id=...
+export async function onRequestDelete({ request, env }) {
   try {
     if (!env.SUPABASE_URL || !env.SUPABASE_SERVICE_ROLE_KEY) {
       return new Response(JSON.stringify({ error: 'Database configuration missing.' }), { status: 500 });
@@ -25,25 +22,28 @@ export async function onRequestGet({ request, env }) {
     }
 
     const url = new URL(request.url);
-    const status = url.searchParams.get('status');
+    const id = url.searchParams.get('id');
 
-    let query = supabase.from('leads').select('*', { count: 'exact' }).order('created_at', { ascending: false });
-    if (status) {
-      query = query.eq('status', status);
+    if (!id) {
+      return new Response(JSON.stringify({ error: 'Lead ID missing.' }), { status: 400 });
     }
 
-    const { data: leads, count, error } = await query;
+    const { error } = await supabase
+      .from('leads')
+      .delete()
+      .eq('id', id);
+
     if (error) throw error;
 
-    return new Response(JSON.stringify({ leads, total: count }), {
+    return new Response(JSON.stringify({ success: true }), {
       status: 200,
-      headers: { 
+      headers: {
         'Content-Type': 'application/json',
         'Access-Control-Allow-Origin': env.ALLOWED_ORIGIN || '*'
       },
     });
   } catch (err) {
-    console.error('List leads error:', err);
+    console.error('Delete lead error:', err);
     return new Response(JSON.stringify({ error: 'Server error' }), { status: 500 });
   }
 }
@@ -52,7 +52,7 @@ export async function onRequestOptions({ env }) {
   return new Response(null, {
     headers: {
       'Access-Control-Allow-Origin': env.ALLOWED_ORIGIN || '*',
-      'Access-Control-Allow-Methods': 'GET, OPTIONS',
+      'Access-Control-Allow-Methods': 'DELETE, OPTIONS',
       'Access-Control-Allow-Headers': 'Content-Type, Authorization',
     },
   });

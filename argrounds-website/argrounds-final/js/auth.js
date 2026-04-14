@@ -1,81 +1,81 @@
+import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js/+esm'
+
 /* ================================================
    Grounds Maintenance — auth.js
-   Supabase auth stub.
-   
-   TODO: Install @supabase/supabase-js via CDN or npm
-   and replace stub functions with real Supabase calls.
+   Supabase auth integration.
    ================================================ */
 
-(function () {
-  'use strict';
+// Provide your actual Supabase URL and ANON Key here or via window.env
+const SUPABASE_URL = window.SUPABASE_URL || 'https://YOUR_PROJECT.supabase.co';
+const SUPABASE_ANON_KEY = window.SUPABASE_ANON_KEY || 'YOUR_ANON_KEY';
 
-  // ── SUPABASE CLIENT STUB ──────────────────────────────────────────────────
-  // When ready, replace with:
-  //   import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js/+esm'
-  //   const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY)
-  //
-  // For now, auth uses a simple sessionStorage token stub.
-  const AUTH_KEY = 'ar_admin_authed';
+export const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
-  // ── SESSION GUARD ─────────────────────────────────────────────────────────
-  // On admin pages (except login), redirect to login if not authenticated
-  const isLoginPage = window.location.pathname.includes('login');
-  const isAdminPage = window.location.pathname.includes('/admin/');
+const isLoginPage = window.location.pathname.includes('login');
+const isAdminPage = window.location.pathname.includes('/admin/');
 
+async function checkSession() {
+  const { data: { session }, error } = await supabase.auth.getSession();
+  
   if (isAdminPage && !isLoginPage) {
-    const authed = sessionStorage.getItem(AUTH_KEY);
-    if (!authed) {
+    if (!session) {
       window.location.replace('login.html');
+    } else {
+      populateUserInfo(session.user);
     }
+  } else if (isLoginPage && session) {
+    window.location.replace('dashboard.html');
   }
+}
 
-  // ── LOGIN FORM ─────────────────────────────────────────────────────────────
-  const loginForm = document.getElementById('loginForm');
-  if (loginForm) {
-    loginForm.addEventListener('submit', async (e) => {
-      e.preventDefault();
-      const email = loginForm.querySelector('[name="email"]').value.trim();
-      const password = loginForm.querySelector('[name="password"]').value;
-      const errEl = document.getElementById('loginError');
-      const btn = document.getElementById('loginBtn');
-
-      if (btn) { btn.disabled = true; btn.textContent = 'Signing in…'; }
-
-      // ── STUB: replace with Supabase signInWithPassword ────────────────────
-      // const { data, error } = await supabase.auth.signInWithPassword({ email, password })
-      // if (error) { showError(error.message); return; }
-      // ─────────────────────────────────────────────────────────────────────
-
-      // Dev stub: any email + "password" works
-      await new Promise((r) => setTimeout(r, 600));
-
-      if (password === 'password' || email) { // stub: always succeeds in dev
-        sessionStorage.setItem(AUTH_KEY, 'true');
-        sessionStorage.setItem('ar_admin_email', email);
-        window.location.href = 'dashboard.html';
-      } else {
-        if (errEl) errEl.classList.add('is-visible');
-        if (btn) { btn.disabled = false; btn.textContent = 'Sign In'; }
-      }
-    });
-  }
-
-  // ── LOGOUT ─────────────────────────────────────────────────────────────────
-  const logoutBtn = document.getElementById('logoutBtn');
-  if (logoutBtn) {
-    logoutBtn.addEventListener('click', () => {
-      sessionStorage.removeItem(AUTH_KEY);
-      sessionStorage.removeItem('ar_admin_email');
-      // TODO: supabase.auth.signOut()
-      window.location.href = 'login.html';
-    });
-  }
-
-  // ── POPULATE USER INFO ────────────────────────────────────────────────────
-  const userEmail = sessionStorage.getItem('ar_admin_email') || '';
+function populateUserInfo(user) {
+  const userEmail = user?.email || '';
   const nameEl = document.getElementById('userName');
   const initialEl = document.getElementById('userInitial');
   if (nameEl && userEmail) nameEl.textContent = userEmail.split('@')[0];
   if (initialEl && userEmail) initialEl.textContent = userEmail[0].toUpperCase();
+}
 
-})();
+// Initialize session check
+checkSession();
+
+// Listen for auth state changes globally
+supabase.auth.onAuthStateChange((event, session) => {
+  if (event === 'SIGNED_OUT' && isAdminPage && !isLoginPage) {
+    window.location.replace('login.html');
+  } else if (event === 'SIGNED_IN' && isLoginPage) {
+    window.location.replace('dashboard.html');
+  }
+});
+
+const loginForm = document.getElementById('loginForm');
+if (loginForm) {
+  loginForm.addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const email = loginForm.querySelector('[name="email"]').value.trim();
+    const password = loginForm.querySelector('[name="password"]').value;
+    const errEl = document.getElementById('loginError');
+    const btn = document.getElementById('loginBtn');
+
+    if (btn) { btn.disabled = true; btn.textContent = 'Signing in…'; }
+
+    const { data, error } = await supabase.auth.signInWithPassword({ email, password });
+
+    if (error) {
+      if (errEl) {
+        errEl.textContent = error.message;
+        errEl.classList.add('is-visible');
+      }
+      if (btn) { btn.disabled = false; btn.textContent = 'Sign In'; }
+    } else {
+      window.location.href = 'dashboard.html';
+    }
+  });
+}
+
+const logoutBtn = document.getElementById('logoutBtn');
+if (logoutBtn) {
+  logoutBtn.addEventListener('click', async () => {
+    await supabase.auth.signOut();
+  });
+}

@@ -109,32 +109,63 @@
     const data = Object.fromEntries(new FormData(form));
     const redirectUrl = form.dataset.redirect || 'thank-you.html';
 
-    // ── BACKEND STUB ──────────────────────────────────────────────────────────
-    // Currently: simulates a 700ms delay then redirects to thank-you.
-    //
-    // TODO when backend is ready:
-    //   const res = await fetch('/api/leads-create', {
-    //     method: 'POST',
-    //     headers: { 'Content-Type': 'application/json' },
-    //     body: JSON.stringify(data),
-    //   });
-    //   if (!res.ok) throw new Error('Server error');
-    // ─────────────────────────────────────────────────────────────────────────
+    // ── ATTRIBUTION DATA ────────────────────────────────────────────────────────
+    const urlParams = new URLSearchParams(window.location.search);
+    const attributionData = {
+      landing_page: sessionStorage.getItem('ar_landing_page') || window.location.pathname,
+      referrer: document.referrer || null,
+      utm_source: urlParams.get('utm_source') || null,
+      utm_medium: urlParams.get('utm_medium') || null,
+      utm_campaign: urlParams.get('utm_campaign') || null,
+      utm_term: urlParams.get('utm_term') || null,
+      utm_content: urlParams.get('utm_content') || null,
+      gclid: urlParams.get('gclid') || null,
+      fbclid: urlParams.get('fbclid') || null,
+      client_id: getCookie('_ga') || null,
+      session_id: getCookie('_ga_session') || null, // Assuming standard GA naming, adjust as needed
+      user_agent: navigator.userAgent,
+      page_path: window.location.pathname,
+      source: 'quote_form'
+    };
 
-    await delay(700); // remove when using real API
+    function getCookie(name) {
+      const match = document.cookie.match(new RegExp('(^| )' + name + '=([^;]+)'));
+      return match ? match[2] : null;
+    }
 
-    // Store name so thank-you page can personalize
-    const name = data.first_name || data.name || '';
-    if (name) sessionStorage.setItem('ar_submitted_name', name.split(' ')[0]);
+    const payload = { ...data, ...attributionData };
 
-    // Store submission locally (useful for debugging before API)
+    // ── API SUBMISSION ────────────────────────────────────────────────────────
     try {
-      const prev = JSON.parse(localStorage.getItem('ar_submissions') || '[]');
-      prev.push({ ...data, submitted_at: new Date().toISOString() });
-      localStorage.setItem('ar_submissions', JSON.stringify(prev));
-    } catch (_) {}
+      const res = await fetch('/api/leads-create', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload),
+      });
 
-    window.location.href = redirectUrl;
+      if (!res.ok) {
+        throw new Error('Server error');
+      }
+
+      // Store name so thank-you page can personalize
+      const name = data.first_name || data.name || '';
+      if (name) sessionStorage.setItem('ar_submitted_name', name.split(' ')[0]);
+
+      window.location.href = redirectUrl;
+    } catch (err) {
+      console.error('Form submission error:', err);
+      setLoading(false);
+      // Show error directly above the button
+      let submitErr = form.querySelector('.submit-error');
+      if (!submitErr) {
+        submitErr = document.createElement('div');
+        submitErr.className = 'submit-error field-error-msg';
+        submitErr.style.marginBottom = '12px';
+        submitErr.style.fontSize = '1rem';
+        submitBtn.parentElement.insertBefore(submitErr, submitBtn);
+      }
+      submitErr.textContent = 'Oops! Something went wrong. Please call us or try again later.';
+    }
   });
 
   // ── HELPERS ────────────────────────────────────────────────────────────────
