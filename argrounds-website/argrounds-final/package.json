@@ -8,7 +8,15 @@
     "serve": "npx serve . -p 3000"
   },
   "devDependencies": {
-    "wrangler": "^3.0.0",
-    "serve": "^14.0.0"
+    "serve": "^14.0.0",
+    "wrangler": "^3.0.0"
+  },
+  "main": "index.js",
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "type": "commonjs",
+  "dependencies": {
+    "@supabase/supabase-js": "^2.103.0"
   }
 }
