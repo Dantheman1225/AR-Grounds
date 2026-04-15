@@ -3,19 +3,16 @@
 // Accepts: JSON body with lead data
 // Returns: 201 with { id } on success
 
-import { createClient } from '@supabase/supabase-js';
 import { sendEmail } from './_email.js';
 
-// POST /api/leads-create
-// Accepts: JSON body with lead data
-// Returns: 201 with { id } on success
+const SUPABASE_REST = (url) => `${url}/rest/v1/leads`;
 
 export async function onRequestPost({ request, env }) {
   try {
     const body = await request.json();
 
     // Validate required fields
-    if (!body.phone && !body.name) {
+    if (!body.phone && !body.name && !body.first_name) {
       return new Response(JSON.stringify({ error: 'Name and phone are required.' }), {
         status: 400,
         headers: { 'Content-Type': 'application/json' },
@@ -29,15 +26,9 @@ export async function onRequestPost({ request, env }) {
       });
     }
 
-    // Initialize Supabase with Service Role Key — persistSession:false required for RLS bypass
-    const supabase = createClient(env.SUPABASE_URL, env.SUPABASE_SERVICE_ROLE_KEY, {
-      auth: { persistSession: false, autoRefreshToken: false }
-    });
-
-    // Insert into Supabase
-    const { data: insertedLead, error } = await supabase.from('leads').insert([{
-      name: `${body.first_name || ''} ${body.last_name || body.name || ''}`.trim(),
-      phone: body.phone,
+    const record = {
+      name: `${body.first_name || ''} ${body.last_name || body.name || ''}`.trim() || 'Unknown',
+      phone: body.phone || null,
       email: body.email || null,
       address: body.address || null,
       service: body.service || null,
@@ -45,8 +36,7 @@ export async function onRequestPost({ request, env }) {
       message: body.message || null,
       status: 'new',
       source: body.source || 'quote_form',
-      
-      // Attribution data
+      // Attribution
       landing_page: body.landing_page || null,
       referrer: body.referrer || null,
       utm_source: body.utm_source || null,
@@ -60,40 +50,53 @@ export async function onRequestPost({ request, env }) {
       session_id: body.session_id || null,
       user_agent: request.headers.get('user-agent') || body.user_agent || null,
       page_path: body.page_path || null,
-    }]).select('id').single();
+    };
 
-    if (error) {
-      console.error('Supabase Insert Error:', error);
-      throw error;
+    // Use Supabase REST API directly with service role key — bypasses RLS entirely
+    const insertRes = await fetch(SUPABASE_REST(env.SUPABASE_URL), {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'apikey': env.SUPABASE_SERVICE_ROLE_KEY,
+        'Authorization': `Bearer ${env.SUPABASE_SERVICE_ROLE_KEY}`,
+        'Prefer': 'return=representation',
+      },
+      body: JSON.stringify(record),
+    });
+
+    if (!insertRes.ok) {
+      const errBody = await insertRes.text();
+      console.error('Supabase REST insert error:', insertRes.status, errBody);
+      return new Response(JSON.stringify({ error: 'Database insert failed.', detail: errBody }), {
+        status: 500,
+        headers: { 'Content-Type': 'application/json' },
+      });
     }
 
-    // Send Emails asynchronously
-    try {
-      await sendEmail(env, {
-        type: 'NEW_LEAD_INTERNAL',
-        lead: body,
-      });
+    const inserted = await insertRes.json();
+    const leadId = Array.isArray(inserted) ? inserted[0]?.id : inserted?.id;
 
+    // Send email notifications (non-blocking — don't fail if email fails)
+    try {
+      await sendEmail(env, { type: 'NEW_LEAD_INTERNAL', lead: body });
       if (body.email) {
-        await sendEmail(env, {
-          type: 'NEW_LEAD_CUSTOMER_CONFIRMATION',
-          lead: body,
-        });
+        await sendEmail(env, { type: 'NEW_LEAD_CUSTOMER_CONFIRMATION', lead: body });
       }
     } catch (emailErr) {
-      console.error('Email sending failed, but lead captured:', emailErr);
+      console.error('Email sending failed, lead still captured:', emailErr.message);
     }
 
-    return new Response(JSON.stringify({ success: true, message: 'Lead received.', id: insertedLead.id }), {
+    return new Response(JSON.stringify({ success: true, message: 'Lead received.', id: leadId }), {
       status: 201,
       headers: {
         'Content-Type': 'application/json',
         'Access-Control-Allow-Origin': env.ALLOWED_ORIGIN || '*',
       },
     });
+
   } catch (err) {
     const msg = err?.message || String(err);
-    console.error('Server error:', msg);
+    console.error('leads-create error:', msg);
     return new Response(JSON.stringify({ error: 'Server error.', detail: msg }), {
       status: 500,
       headers: { 'Content-Type': 'application/json' },
