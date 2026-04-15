@@ -23,8 +23,8 @@ export async function onRequestPost({ request, env }) {
     }
 
     if (!env.SUPABASE_URL || !env.SUPABASE_SERVICE_ROLE_KEY) {
-      return new Response(JSON.stringify({ error: 'Database configuration missing.' }), {
-        status: 500,
+      return new Response(JSON.stringify({ error: 'Missing env vars: SUPABASE_URL or SUPABASE_SERVICE_ROLE_KEY not set in Cloudflare.' }), {
+        status: 503,
         headers: { 'Content-Type': 'application/json' },
       });
     }
@@ -90,8 +90,9 @@ export async function onRequestPost({ request, env }) {
       },
     });
   } catch (err) {
-    console.error('Server error:', err);
-    return new Response(JSON.stringify({ error: 'Server error.' }), {
+    const msg = err?.message || String(err);
+    console.error('Server error:', msg);
+    return new Response(JSON.stringify({ error: 'Server error.', detail: msg }), {
       status: 500,
       headers: { 'Content-Type': 'application/json' },
     });
