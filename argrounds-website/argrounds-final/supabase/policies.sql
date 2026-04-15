@@ -17,9 +17,12 @@ CREATE POLICY "Public can insert leads"
   WITH CHECK (true);
 
 -- ── SERVICE ROLE: Full access for backend functions ────────────────────────
--- (Service role key bypasses RLS by default in Supabase — no policy needed)
--- If you want to be explicit, you can add:
--- CREATE POLICY "Service role full access" ON leads FOR ALL TO service_role USING (true);
+-- Service role key bypasses RLS but we add explicit policy as belt-and-suspenders
+CREATE POLICY "Service role full access"
+  ON leads FOR ALL
+  TO service_role
+  USING (true)
+  WITH CHECK (true);
 
 -- ── FUTURE: Add admin user policies when Supabase Auth is wired up ─────────
 -- Example:
