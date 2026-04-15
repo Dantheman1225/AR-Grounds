@@ -82,7 +82,7 @@ var __toESM2 = /* @__PURE__ */ __name((mod, isNodeMode, target) => (target = mod
   mod
 )), "__toESM");
 var require_strip_cf_connecting_ip_header2 = __commonJS2({
-  "../.wrangler/tmp/bundle-c0YqPr/strip-cf-connecting-ip-header.js"() {
+  "../.wrangler/tmp/bundle-J8hnQl/strip-cf-connecting-ip-header.js"() {
     function stripCfConnectingIPHeader(input, init) {
       const request = new Request(input, init);
       request.headers.delete("CF-Connecting-IP");
@@ -20505,10 +20505,11 @@ async function onRequestPost2({ request, env }) {
 __name(onRequestPost2, "onRequestPost2");
 __name2(onRequestPost2, "onRequestPost");
 var import_strip_cf_connecting_ip_header44 = __toESM2(require_strip_cf_connecting_ip_header2());
+var SUPABASE_REST = /* @__PURE__ */ __name2((url) => `${url}/rest/v1/leads`, "SUPABASE_REST");
 async function onRequestPost3({ request, env }) {
   try {
     const body = await request.json();
-    if (!body.phone && !body.name) {
+    if (!body.phone && !body.name && !body.first_name) {
       return new Response(JSON.stringify({ error: "Name and phone are required." }), {
         status: 400,
         headers: { "Content-Type": "application/json" }
@@ -20520,12 +20521,9 @@ async function onRequestPost3({ request, env }) {
         headers: { "Content-Type": "application/json" }
       });
     }
-    const supabase = createClient(env.SUPABASE_URL, env.SUPABASE_SERVICE_ROLE_KEY, {
-      auth: { persistSession: false, autoRefreshToken: false }
-    });
-    const { data: insertedLead, error } = await supabase.from("leads").insert([{
-      name: `${body.first_name || ""} ${body.last_name || body.name || ""}`.trim(),
-      phone: body.phone,
+    const record = {
+      name: `${body.first_name || ""} ${body.last_name || body.name || ""}`.trim() || "Unknown",
+      phone: body.phone || null,
       email: body.email || null,
       address: body.address || null,
       service: body.service || null,
@@ -20533,7 +20531,7 @@ async function onRequestPost3({ request, env }) {
       message: body.message || null,
       status: "new",
       source: body.source || "quote_form",
-      // Attribution data
+      // Attribution
       landing_page: body.landing_page || null,
       referrer: body.referrer || null,
       utm_source: body.utm_source || null,
@@ -20547,26 +20545,36 @@ async function onRequestPost3({ request, env }) {
       session_id: body.session_id || null,
       user_agent: request.headers.get("user-agent") || body.user_agent || null,
       page_path: body.page_path || null
-    }]).select("id").single();
-    if (error) {
-      console.error("Supabase Insert Error:", error);
-      throw error;
-    }
-    try {
-      await sendEmail(env, {
-        type: "NEW_LEAD_INTERNAL",
-        lead: body
+    };
+    const insertRes = await fetch(SUPABASE_REST(env.SUPABASE_URL), {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "apikey": env.SUPABASE_SERVICE_ROLE_KEY,
+        "Authorization": `Bearer ${env.SUPABASE_SERVICE_ROLE_KEY}`,
+        "Prefer": "return=representation"
+      },
+      body: JSON.stringify(record)
+    });
+    if (!insertRes.ok) {
+      const errBody = await insertRes.text();
+      console.error("Supabase REST insert error:", insertRes.status, errBody);
+      return new Response(JSON.stringify({ error: "Database insert failed.", detail: errBody }), {
+        status: 500,
+        headers: { "Content-Type": "application/json" }
       });
+    }
+    const inserted = await insertRes.json();
+    const leadId = Array.isArray(inserted) ? inserted[0]?.id : inserted?.id;
+    try {
+      await sendEmail(env, { type: "NEW_LEAD_INTERNAL", lead: body });
       if (body.email) {
-        await sendEmail(env, {
-          type: "NEW_LEAD_CUSTOMER_CONFIRMATION",
-          lead: body
-        });
+        await sendEmail(env, { type: "NEW_LEAD_CUSTOMER_CONFIRMATION", lead: body });
       }
     } catch (emailErr) {
-      console.error("Email sending failed, but lead captured:", emailErr);
+      console.error("Email sending failed, lead still captured:", emailErr.message);
     }
-    return new Response(JSON.stringify({ success: true, message: "Lead received.", id: insertedLead.id }), {
+    return new Response(JSON.stringify({ success: true, message: "Lead received.", id: leadId }), {
       status: 201,
       headers: {
         "Content-Type": "application/json",
@@ -20575,7 +20583,7 @@ async function onRequestPost3({ request, env }) {
     });
   } catch (err) {
     const msg = err?.message || String(err);
-    console.error("Server error:", msg);
+    console.error("leads-create error:", msg);
     return new Response(JSON.stringify({ error: "Server error.", detail: msg }), {
       status: 500,
       headers: { "Content-Type": "application/json" }
