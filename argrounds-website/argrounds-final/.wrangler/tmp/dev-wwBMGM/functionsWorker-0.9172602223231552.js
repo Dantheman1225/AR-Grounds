@@ -82,7 +82,7 @@ var __toESM2 = /* @__PURE__ */ __name((mod, isNodeMode, target) => (target = mod
   mod
 )), "__toESM");
 var require_strip_cf_connecting_ip_header2 = __commonJS2({
-  "../.wrangler/tmp/bundle-stZJQJ/strip-cf-connecting-ip-header.js"() {
+  "../.wrangler/tmp/bundle-c0YqPr/strip-cf-connecting-ip-header.js"() {
     function stripCfConnectingIPHeader(input, init) {
       const request = new Request(input, init);
       request.headers.delete("CF-Connecting-IP");
@@ -20427,7 +20427,9 @@ async function onRequestPost({ request, env }) {
         headers: { "Content-Type": "application/json" }
       });
     }
-    const supabase = createClient(env.SUPABASE_URL, env.SUPABASE_SERVICE_ROLE_KEY);
+    const supabase = createClient(env.SUPABASE_URL, env.SUPABASE_SERVICE_ROLE_KEY, {
+      auth: { persistSession: false, autoRefreshToken: false }
+    });
     const { data: insertedLead, error } = await supabase.from("leads").insert([{
       name: body.name.trim(),
       phone: body.phone || null,
@@ -20513,12 +20515,14 @@ async function onRequestPost3({ request, env }) {
       });
     }
     if (!env.SUPABASE_URL || !env.SUPABASE_SERVICE_ROLE_KEY) {
-      return new Response(JSON.stringify({ error: "Database configuration missing." }), {
-        status: 500,
+      return new Response(JSON.stringify({ error: "Missing env vars: SUPABASE_URL or SUPABASE_SERVICE_ROLE_KEY not set in Cloudflare." }), {
+        status: 503,
         headers: { "Content-Type": "application/json" }
       });
     }
-    const supabase = createClient(env.SUPABASE_URL, env.SUPABASE_SERVICE_ROLE_KEY);
+    const supabase = createClient(env.SUPABASE_URL, env.SUPABASE_SERVICE_ROLE_KEY, {
+      auth: { persistSession: false, autoRefreshToken: false }
+    });
     const { data: insertedLead, error } = await supabase.from("leads").insert([{
       name: `${body.first_name || ""} ${body.last_name || body.name || ""}`.trim(),
       phone: body.phone,
@@ -20570,8 +20574,9 @@ async function onRequestPost3({ request, env }) {
       }
     });
   } catch (err) {
-    console.error("Server error:", err);
-    return new Response(JSON.stringify({ error: "Server error." }), {
+    const msg = err?.message || String(err);
+    console.error("Server error:", msg);
+    return new Response(JSON.stringify({ error: "Server error.", detail: msg }), {
       status: 500,
       headers: { "Content-Type": "application/json" }
     });
@@ -20601,7 +20606,9 @@ async function onRequestDelete({ request, env }) {
       return new Response(JSON.stringify({ error: "Unauthorized" }), { status: 401 });
     }
     const token = authHeader.split(" ")[1];
-    const supabase = createClient(env.SUPABASE_URL, env.SUPABASE_SERVICE_ROLE_KEY);
+    const supabase = createClient(env.SUPABASE_URL, env.SUPABASE_SERVICE_ROLE_KEY, {
+      auth: { persistSession: false, autoRefreshToken: false }
+    });
     const { data: { user }, error: authError } = await supabase.auth.getUser(token);
     if (authError || !user) {
       return new Response(JSON.stringify({ error: "Unauthorized" }), { status: 401 });
@@ -20650,7 +20657,9 @@ async function onRequestGet({ request, env }) {
       return new Response(JSON.stringify({ error: "Unauthorized" }), { status: 401 });
     }
     const token = authHeader.split(" ")[1];
-    const supabase = createClient(env.SUPABASE_URL, env.SUPABASE_SERVICE_ROLE_KEY);
+    const supabase = createClient(env.SUPABASE_URL, env.SUPABASE_SERVICE_ROLE_KEY, {
+      auth: { persistSession: false, autoRefreshToken: false }
+    });
     const { data: { user }, error: authError } = await supabase.auth.getUser(token);
     if (authError || !user) {
       return new Response(JSON.stringify({ error: "Unauthorized" }), { status: 401 });
@@ -20700,7 +20709,9 @@ async function onRequestPut({ request, env }) {
       return new Response(JSON.stringify({ error: "Unauthorized" }), { status: 401 });
     }
     const token = authHeader.split(" ")[1];
-    const supabase = createClient(env.SUPABASE_URL, env.SUPABASE_SERVICE_ROLE_KEY);
+    const supabase = createClient(env.SUPABASE_URL, env.SUPABASE_SERVICE_ROLE_KEY, {
+      auth: { persistSession: false, autoRefreshToken: false }
+    });
     const { data: { user }, error: authError } = await supabase.auth.getUser(token);
     if (authError || !user) {
       return new Response(JSON.stringify({ error: "Unauthorized" }), { status: 401 });
