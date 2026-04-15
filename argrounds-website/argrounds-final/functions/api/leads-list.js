@@ -16,7 +16,9 @@ export async function onRequestGet({ request, env }) {
     }
 
     const token = authHeader.split(' ')[1];
-    const supabase = createClient(env.SUPABASE_URL, env.SUPABASE_SERVICE_ROLE_KEY);
+    const supabase = createClient(env.SUPABASE_URL, env.SUPABASE_SERVICE_ROLE_KEY, {
+      auth: { persistSession: false, autoRefreshToken: false }
+    });
 
     // Verify token
     const { data: { user }, error: authError } = await supabase.auth.getUser(token);

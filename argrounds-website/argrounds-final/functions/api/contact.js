@@ -23,7 +23,9 @@ export async function onRequestPost({ request, env }) {
       });
     }
 
-    const supabase = createClient(env.SUPABASE_URL, env.SUPABASE_SERVICE_ROLE_KEY);
+    const supabase = createClient(env.SUPABASE_URL, env.SUPABASE_SERVICE_ROLE_KEY, {
+      auth: { persistSession: false, autoRefreshToken: false }
+    });
 
     const { data: insertedLead, error } = await supabase.from('leads').insert([{
       name: body.name.trim(),

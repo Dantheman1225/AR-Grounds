@@ -29,8 +29,10 @@ export async function onRequestPost({ request, env }) {
       });
     }
 
-    // Initialize Supabase with Service Role Key for server-side insert
-    const supabase = createClient(env.SUPABASE_URL, env.SUPABASE_SERVICE_ROLE_KEY);
+    // Initialize Supabase with Service Role Key — persistSession:false required for RLS bypass
+    const supabase = createClient(env.SUPABASE_URL, env.SUPABASE_SERVICE_ROLE_KEY, {
+      auth: { persistSession: false, autoRefreshToken: false }
+    });
 
     // Insert into Supabase
     const { data: insertedLead, error } = await supabase.from('leads').insert([{
