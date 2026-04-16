@@ -82,7 +82,7 @@ var __toESM2 = /* @__PURE__ */ __name((mod, isNodeMode, target) => (target = mod
   mod
 )), "__toESM");
 var require_strip_cf_connecting_ip_header2 = __commonJS2({
-  "../.wrangler/tmp/bundle-J8hnQl/strip-cf-connecting-ip-header.js"() {
+  "../.wrangler/tmp/bundle-wxICYr/strip-cf-connecting-ip-header.js"() {
     function stripCfConnectingIPHeader(input, init) {
       const request = new Request(input, init);
       request.headers.delete("CF-Connecting-IP");
@@ -20506,27 +20506,39 @@ __name(onRequestPost2, "onRequestPost2");
 __name2(onRequestPost2, "onRequestPost");
 var import_strip_cf_connecting_ip_header44 = __toESM2(require_strip_cf_connecting_ip_header2());
 var SUPABASE_REST = /* @__PURE__ */ __name2((url) => `${url}/rest/v1/leads`, "SUPABASE_REST");
+function jsonResponse(env, body, { status = 200, extraHeaders = {} } = {}) {
+  return new Response(JSON.stringify(body), {
+    status,
+    headers: {
+      "Content-Type": "application/json",
+      "Access-Control-Allow-Origin": env?.ALLOWED_ORIGIN || "*",
+      ...extraHeaders
+    }
+  });
+}
+__name(jsonResponse, "jsonResponse");
+__name2(jsonResponse, "jsonResponse");
 async function onRequestPost3({ request, env }) {
   try {
     const body = await request.json();
-    if (!body.phone && !body.name && !body.first_name) {
-      return new Response(JSON.stringify({ error: "Name and phone are required." }), {
-        status: 400,
-        headers: { "Content-Type": "application/json" }
-      });
+    const nameValue = `${body.first_name || ""} ${body.last_name || body.name || ""}`.trim();
+    if (!nameValue || !body.phone) {
+      return jsonResponse(env, { error: "Name and phone are required." }, { status: 400 });
     }
     if (!env.SUPABASE_URL || !env.SUPABASE_SERVICE_ROLE_KEY) {
-      return new Response(JSON.stringify({ error: "Missing env vars: SUPABASE_URL or SUPABASE_SERVICE_ROLE_KEY not set in Cloudflare." }), {
-        status: 503,
-        headers: { "Content-Type": "application/json" }
-      });
+      return jsonResponse(
+        env,
+        { error: "Missing env vars: SUPABASE_URL or SUPABASE_SERVICE_ROLE_KEY not set in Cloudflare." },
+        { status: 503 }
+      );
     }
     const record = {
-      name: `${body.first_name || ""} ${body.last_name || body.name || ""}`.trim() || "Unknown",
+      name: nameValue,
       phone: body.phone || null,
       email: body.email || null,
       address: body.address || null,
       service: body.service || null,
+      size: body.size || null,
       timing: body.timing || null,
       message: body.message || null,
       status: "new",
@@ -20559,10 +20571,16 @@ async function onRequestPost3({ request, env }) {
     if (!insertRes.ok) {
       const errBody = await insertRes.text();
       console.error("Supabase REST insert error:", insertRes.status, errBody);
-      return new Response(JSON.stringify({ error: "Database insert failed.", detail: errBody }), {
-        status: 500,
-        headers: { "Content-Type": "application/json" }
-      });
+      const status = insertRes.status >= 400 && insertRes.status < 600 ? insertRes.status : 500;
+      return jsonResponse(
+        env,
+        {
+          error: "Database insert failed.",
+          upstream_status: insertRes.status,
+          detail: errBody
+        },
+        { status }
+      );
     }
     const inserted = await insertRes.json();
     const leadId = Array.isArray(inserted) ? inserted[0]?.id : inserted?.id;
@@ -20574,28 +20592,19 @@ async function onRequestPost3({ request, env }) {
     } catch (emailErr) {
       console.error("Email sending failed, lead still captured:", emailErr.message);
     }
-    return new Response(JSON.stringify({ success: true, message: "Lead received.", id: leadId }), {
-      status: 201,
-      headers: {
-        "Content-Type": "application/json",
-        "Access-Control-Allow-Origin": env.ALLOWED_ORIGIN || "*"
-      }
-    });
+    return jsonResponse(env, { success: true, message: "Lead received.", id: leadId }, { status: 201 });
   } catch (err) {
     const msg = err?.message || String(err);
     console.error("leads-create error:", msg);
-    return new Response(JSON.stringify({ error: "Server error.", detail: msg }), {
-      status: 500,
-      headers: { "Content-Type": "application/json" }
-    });
+    return jsonResponse(env, { error: "Server error.", detail: msg }, { status: 500 });
   }
 }
 __name(onRequestPost3, "onRequestPost3");
 __name2(onRequestPost3, "onRequestPost");
-async function onRequestOptions2() {
+async function onRequestOptions2({ env }) {
   return new Response(null, {
     headers: {
-      "Access-Control-Allow-Origin": "*",
+      "Access-Control-Allow-Origin": env?.ALLOWED_ORIGIN || "*",
       "Access-Control-Allow-Methods": "POST, OPTIONS",
       "Access-Control-Allow-Headers": "Content-Type"
     }

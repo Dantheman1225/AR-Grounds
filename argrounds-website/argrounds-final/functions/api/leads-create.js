@@ -7,31 +7,42 @@ import { sendEmail } from './_email.js';
 
 const SUPABASE_REST = (url) => `${url}/rest/v1/leads`;
 
+function jsonResponse(env, body, { status = 200, extraHeaders = {} } = {}) {
+  return new Response(JSON.stringify(body), {
+    status,
+    headers: {
+      'Content-Type': 'application/json',
+      'Access-Control-Allow-Origin': env?.ALLOWED_ORIGIN || '*',
+      ...extraHeaders,
+    },
+  });
+}
+
 export async function onRequestPost({ request, env }) {
   try {
     const body = await request.json();
 
     // Validate required fields
-    if (!body.phone && !body.name && !body.first_name) {
-      return new Response(JSON.stringify({ error: 'Name and phone are required.' }), {
-        status: 400,
-        headers: { 'Content-Type': 'application/json' },
-      });
+    const nameValue = `${body.first_name || ''} ${body.last_name || body.name || ''}`.trim();
+    if (!nameValue || !body.phone) {
+      return jsonResponse(env, { error: 'Name and phone are required.' }, { status: 400 });
     }
 
     if (!env.SUPABASE_URL || !env.SUPABASE_SERVICE_ROLE_KEY) {
-      return new Response(JSON.stringify({ error: 'Missing env vars: SUPABASE_URL or SUPABASE_SERVICE_ROLE_KEY not set in Cloudflare.' }), {
-        status: 503,
-        headers: { 'Content-Type': 'application/json' },
-      });
+      return jsonResponse(
+        env,
+        { error: 'Missing env vars: SUPABASE_URL or SUPABASE_SERVICE_ROLE_KEY not set in Cloudflare.' },
+        { status: 503 }
+      );
     }
 
     const record = {
-      name: `${body.first_name || ''} ${body.last_name || body.name || ''}`.trim() || 'Unknown',
+      name: nameValue,
       phone: body.phone || null,
       email: body.email || null,
       address: body.address || null,
       service: body.service || null,
+      size: body.size || null,
       timing: body.timing || null,
       message: body.message || null,
       status: 'new',
@@ -67,10 +78,18 @@ export async function onRequestPost({ request, env }) {
     if (!insertRes.ok) {
       const errBody = await insertRes.text();
       console.error('Supabase REST insert error:', insertRes.status, errBody);
-      return new Response(JSON.stringify({ error: 'Database insert failed.', detail: errBody }), {
-        status: 500,
-        headers: { 'Content-Type': 'application/json' },
-      });
+
+      // Propagate upstream error code where possible (keep 5xx for true upstream errors)
+      const status = insertRes.status >= 400 && insertRes.status < 600 ? insertRes.status : 500;
+      return jsonResponse(
+        env,
+        {
+          error: 'Database insert failed.',
+          upstream_status: insertRes.status,
+          detail: errBody,
+        },
+        { status }
+      );
     }
 
     const inserted = await insertRes.json();
@@ -86,29 +105,20 @@ export async function onRequestPost({ request, env }) {
       console.error('Email sending failed, lead still captured:', emailErr.message);
     }
 
-    return new Response(JSON.stringify({ success: true, message: 'Lead received.', id: leadId }), {
-      status: 201,
-      headers: {
-        'Content-Type': 'application/json',
-        'Access-Control-Allow-Origin': env.ALLOWED_ORIGIN || '*',
-      },
-    });
+    return jsonResponse(env, { success: true, message: 'Lead received.', id: leadId }, { status: 201 });
 
   } catch (err) {
     const msg = err?.message || String(err);
     console.error('leads-create error:', msg);
-    return new Response(JSON.stringify({ error: 'Server error.', detail: msg }), {
-      status: 500,
-      headers: { 'Content-Type': 'application/json' },
-    });
+    return jsonResponse(env, { error: 'Server error.', detail: msg }, { status: 500 });
   }
 }
 
 // Handle CORS preflight
-export async function onRequestOptions() {
+export async function onRequestOptions({ env }) {
   return new Response(null, {
     headers: {
-      'Access-Control-Allow-Origin': '*',
+      'Access-Control-Allow-Origin': env?.ALLOWED_ORIGIN || '*',
       'Access-Control-Allow-Methods': 'POST, OPTIONS',
       'Access-Control-Allow-Headers': 'Content-Type',
     },
