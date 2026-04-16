@@ -144,7 +144,9 @@
       });
 
       if (!res.ok) {
-        throw new Error('Server error');
+        const errText = await res.text().catch(() => '');
+        console.error('Lead API error:', res.status, errText);
+        throw new Error(`Lead API error (${res.status}): ${errText || 'Server error'}`);
       }
 
       // Store name so thank-you page can personalize
