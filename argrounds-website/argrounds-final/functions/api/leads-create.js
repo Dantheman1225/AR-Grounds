@@ -64,12 +64,12 @@ export async function onRequestPost({ request, env }) {
     };
 
     // Use Supabase REST API directly with service role key — bypasses RLS entirely
-    const insertRes = await fetch(SUPABASE_REST(env.SUPABASE_URL), {
+    const insertRes = await fetch(SUPABASE_REST(env.SUPABASE_URL.trim()), {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
-        'apikey': env.SUPABASE_SERVICE_ROLE_KEY,
-        'Authorization': `Bearer ${env.SUPABASE_SERVICE_ROLE_KEY}`,
+        'apikey': env.SUPABASE_SERVICE_ROLE_KEY.trim(),
+        'Authorization': `Bearer ${env.SUPABASE_SERVICE_ROLE_KEY.trim()}`,
         'Prefer': 'return=representation',
       },
       body: JSON.stringify(record),

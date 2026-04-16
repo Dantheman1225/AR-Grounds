@@ -82,7 +82,7 @@ var __toESM2 = /* @__PURE__ */ __name((mod, isNodeMode, target) => (target = mod
   mod
 )), "__toESM");
 var require_strip_cf_connecting_ip_header2 = __commonJS2({
-  "../.wrangler/tmp/bundle-wxICYr/strip-cf-connecting-ip-header.js"() {
+  "../.wrangler/tmp/bundle-lOFHMj/strip-cf-connecting-ip-header.js"() {
     function stripCfConnectingIPHeader(input, init) {
       const request = new Request(input, init);
       request.headers.delete("CF-Connecting-IP");
@@ -20558,12 +20558,12 @@ async function onRequestPost3({ request, env }) {
       user_agent: request.headers.get("user-agent") || body.user_agent || null,
       page_path: body.page_path || null
     };
-    const insertRes = await fetch(SUPABASE_REST(env.SUPABASE_URL), {
+    const insertRes = await fetch(SUPABASE_REST(env.SUPABASE_URL.trim()), {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
-        "apikey": env.SUPABASE_SERVICE_ROLE_KEY,
-        "Authorization": `Bearer ${env.SUPABASE_SERVICE_ROLE_KEY}`,
+        "apikey": env.SUPABASE_SERVICE_ROLE_KEY.trim(),
+        "Authorization": `Bearer ${env.SUPABASE_SERVICE_ROLE_KEY.trim()}`,
         "Prefer": "return=representation"
       },
       body: JSON.stringify(record)
