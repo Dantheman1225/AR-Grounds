@@ -18,6 +18,19 @@ function jsonResponse(env, body, { status = 200, extraHeaders = {} } = {}) {
   });
 }
 
+function safeJwtRole(jwt) {
+  try {
+    const token = (jwt || '').trim();
+    const parts = token.split('.');
+    if (parts.length < 2) return null;
+    const payloadStr = atob(parts[1].replace(/-/g, '+').replace(/_/g, '/'));
+    const payload = JSON.parse(payloadStr);
+    return payload?.role || null;
+  } catch {
+    return null;
+  }
+}
+
 export async function onRequestPost({ request, env }) {
   try {
     const body = await request.json();
@@ -28,10 +41,15 @@ export async function onRequestPost({ request, env }) {
       return jsonResponse(env, { error: 'Name and phone are required.' }, { status: 400 });
     }
 
-    if (!env.SUPABASE_URL || !env.SUPABASE_SERVICE_ROLE_KEY) {
+    const supabaseUrl = env.SUPABASE_URL?.trim();
+    const supabaseKey = (env.SUPABASE_ANON_KEY || env.SUPABASE_SERVICE_ROLE_KEY || '').trim();
+    const keyRole = safeJwtRole(supabaseKey);
+    const keySource = env.SUPABASE_ANON_KEY ? 'anon' : 'service_role';
+
+    if (!supabaseUrl || !supabaseKey) {
       return jsonResponse(
         env,
-        { error: 'Missing env vars: SUPABASE_URL or SUPABASE_SERVICE_ROLE_KEY not set in Cloudflare.' },
+        { error: 'Missing env vars: SUPABASE_URL and (SUPABASE_ANON_KEY or SUPABASE_SERVICE_ROLE_KEY) must be set in Cloudflare.' },
         { status: 503 }
       );
     }
@@ -64,12 +82,12 @@ export async function onRequestPost({ request, env }) {
     };
 
     // Use Supabase REST API directly with service role key — bypasses RLS entirely
-    const insertRes = await fetch(SUPABASE_REST(env.SUPABASE_URL.trim()), {
+    const insertRes = await fetch(SUPABASE_REST(supabaseUrl), {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
-        'apikey': env.SUPABASE_SERVICE_ROLE_KEY.trim(),
-        'Authorization': `Bearer ${env.SUPABASE_SERVICE_ROLE_KEY.trim()}`,
+        'apikey': supabaseKey,
+        'Authorization': `Bearer ${supabaseKey}`,
         'Prefer': 'return=representation',
       },
       body: JSON.stringify(record),
@@ -86,6 +104,8 @@ export async function onRequestPost({ request, env }) {
         {
           error: 'Database insert failed.',
           upstream_status: insertRes.status,
+          key_source: keySource,
+          key_role: keyRole,
           detail: errBody,
         },
         { status }

@@ -25,9 +25,9 @@ var __toESM = (mod, isNodeMode, target) => (target = mod != null ? __create(__ge
   mod
 ));
 
-// ../.wrangler/tmp/bundle-lOFHMj/strip-cf-connecting-ip-header.js
+// ../.wrangler/tmp/bundle-iJFSPN/strip-cf-connecting-ip-header.js
 var require_strip_cf_connecting_ip_header = __commonJS({
-  "../.wrangler/tmp/bundle-lOFHMj/strip-cf-connecting-ip-header.js"() {
+  "../.wrangler/tmp/bundle-iJFSPN/strip-cf-connecting-ip-header.js"() {
     function stripCfConnectingIPHeader(input, init) {
       const request = new Request(input, init);
       request.headers.delete("CF-Connecting-IP");
@@ -20467,6 +20467,20 @@ function jsonResponse(env, body, { status = 200, extraHeaders = {} } = {}) {
   });
 }
 __name(jsonResponse, "jsonResponse");
+function safeJwtRole(jwt) {
+  try {
+    const token = (jwt || "").trim();
+    const parts = token.split(".");
+    if (parts.length < 2)
+      return null;
+    const payloadStr = atob(parts[1].replace(/-/g, "+").replace(/_/g, "/"));
+    const payload = JSON.parse(payloadStr);
+    return payload?.role || null;
+  } catch {
+    return null;
+  }
+}
+__name(safeJwtRole, "safeJwtRole");
 async function onRequestPost3({ request, env }) {
   try {
     const body = await request.json();
@@ -20474,10 +20488,14 @@ async function onRequestPost3({ request, env }) {
     if (!nameValue || !body.phone) {
       return jsonResponse(env, { error: "Name and phone are required." }, { status: 400 });
     }
-    if (!env.SUPABASE_URL || !env.SUPABASE_SERVICE_ROLE_KEY) {
+    const supabaseUrl = env.SUPABASE_URL?.trim();
+    const supabaseKey = (env.SUPABASE_ANON_KEY || env.SUPABASE_SERVICE_ROLE_KEY || "").trim();
+    const keyRole = safeJwtRole(supabaseKey);
+    const keySource = env.SUPABASE_ANON_KEY ? "anon" : "service_role";
+    if (!supabaseUrl || !supabaseKey) {
       return jsonResponse(
         env,
-        { error: "Missing env vars: SUPABASE_URL or SUPABASE_SERVICE_ROLE_KEY not set in Cloudflare." },
+        { error: "Missing env vars: SUPABASE_URL and (SUPABASE_ANON_KEY or SUPABASE_SERVICE_ROLE_KEY) must be set in Cloudflare." },
         { status: 503 }
       );
     }
@@ -20507,12 +20525,12 @@ async function onRequestPost3({ request, env }) {
       user_agent: request.headers.get("user-agent") || body.user_agent || null,
       page_path: body.page_path || null
     };
-    const insertRes = await fetch(SUPABASE_REST(env.SUPABASE_URL.trim()), {
+    const insertRes = await fetch(SUPABASE_REST(supabaseUrl), {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
-        "apikey": env.SUPABASE_SERVICE_ROLE_KEY.trim(),
-        "Authorization": `Bearer ${env.SUPABASE_SERVICE_ROLE_KEY.trim()}`,
+        "apikey": supabaseKey,
+        "Authorization": `Bearer ${supabaseKey}`,
         "Prefer": "return=representation"
       },
       body: JSON.stringify(record)
@@ -20526,6 +20544,8 @@ async function onRequestPost3({ request, env }) {
         {
           error: "Database insert failed.",
           upstream_status: insertRes.status,
+          key_source: keySource,
+          key_role: keyRole,
           detail: errBody
         },
         { status }
@@ -20842,10 +20862,10 @@ var routes = [
   }
 ];
 
-// ../.wrangler/tmp/bundle-lOFHMj/middleware-loader.entry.ts
+// ../.wrangler/tmp/bundle-iJFSPN/middleware-loader.entry.ts
 var import_strip_cf_connecting_ip_header57 = __toESM(require_strip_cf_connecting_ip_header());
 
-// ../.wrangler/tmp/bundle-lOFHMj/middleware-insertion-facade.js
+// ../.wrangler/tmp/bundle-iJFSPN/middleware-insertion-facade.js
 var import_strip_cf_connecting_ip_header55 = __toESM(require_strip_cf_connecting_ip_header());
 
 // ../node_modules/wrangler/templates/pages-template-worker.ts
@@ -21341,7 +21361,7 @@ var jsonError = /* @__PURE__ */ __name(async (request, env, _ctx, middlewareCtx)
 }, "jsonError");
 var middleware_miniflare3_json_error_default = jsonError;
 
-// ../.wrangler/tmp/bundle-lOFHMj/middleware-insertion-facade.js
+// ../.wrangler/tmp/bundle-iJFSPN/middleware-insertion-facade.js
 var __INTERNAL_WRANGLER_MIDDLEWARE__ = [
   middleware_ensure_req_body_drained_default,
   middleware_miniflare3_json_error_default
@@ -21374,7 +21394,7 @@ function __facade_invoke__(request, env, ctx, dispatch, finalMiddleware) {
 }
 __name(__facade_invoke__, "__facade_invoke__");
 
-// ../.wrangler/tmp/bundle-lOFHMj/middleware-loader.entry.ts
+// ../.wrangler/tmp/bundle-iJFSPN/middleware-loader.entry.ts
 var __Facade_ScheduledController__ = class {
   constructor(scheduledTime, cron, noRetry) {
     this.scheduledTime = scheduledTime;
