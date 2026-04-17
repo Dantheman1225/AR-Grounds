@@ -82,7 +82,7 @@ var __toESM2 = /* @__PURE__ */ __name((mod, isNodeMode, target) => (target = mod
   mod
 )), "__toESM");
 var require_strip_cf_connecting_ip_header2 = __commonJS2({
-  "../.wrangler/tmp/bundle-iJFSPN/strip-cf-connecting-ip-header.js"() {
+  "../.wrangler/tmp/bundle-tAYR9h/strip-cf-connecting-ip-header.js"() {
     function stripCfConnectingIPHeader(input, init) {
       const request = new Request(input, init);
       request.headers.delete("CF-Connecting-IP");
@@ -20548,6 +20548,16 @@ async function onRequestPost3({ request, env }) {
       return jsonResponse(
         env,
         { error: "Missing env vars: SUPABASE_URL and (SUPABASE_ANON_KEY or SUPABASE_SERVICE_ROLE_KEY) must be set in Cloudflare." },
+        { status: 503 }
+      );
+    }
+    if (!keyRole) {
+      return jsonResponse(
+        env,
+        {
+          error: 'Invalid Supabase key configured. Use the JWT keys (anon/service_role) that start with "eyJ...", not the new "sb_publishable_*" / "sb_secret_*" keys.',
+          key_source: keySource
+        },
         { status: 503 }
       );
     }

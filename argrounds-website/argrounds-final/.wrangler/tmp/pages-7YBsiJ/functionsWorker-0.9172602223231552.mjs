@@ -25,9 +25,9 @@ var __toESM = (mod, isNodeMode, target) => (target = mod != null ? __create(__ge
   mod
 ));
 
-// ../.wrangler/tmp/bundle-iJFSPN/strip-cf-connecting-ip-header.js
+// ../.wrangler/tmp/bundle-tAYR9h/strip-cf-connecting-ip-header.js
 var require_strip_cf_connecting_ip_header = __commonJS({
-  "../.wrangler/tmp/bundle-iJFSPN/strip-cf-connecting-ip-header.js"() {
+  "../.wrangler/tmp/bundle-tAYR9h/strip-cf-connecting-ip-header.js"() {
     function stripCfConnectingIPHeader(input, init) {
       const request = new Request(input, init);
       request.headers.delete("CF-Connecting-IP");
@@ -20499,6 +20499,16 @@ async function onRequestPost3({ request, env }) {
         { status: 503 }
       );
     }
+    if (!keyRole) {
+      return jsonResponse(
+        env,
+        {
+          error: 'Invalid Supabase key configured. Use the JWT keys (anon/service_role) that start with "eyJ...", not the new "sb_publishable_*" / "sb_secret_*" keys.',
+          key_source: keySource
+        },
+        { status: 503 }
+      );
+    }
     const record = {
       name: nameValue,
       phone: body.phone || null,
@@ -20862,10 +20872,10 @@ var routes = [
   }
 ];
 
-// ../.wrangler/tmp/bundle-iJFSPN/middleware-loader.entry.ts
+// ../.wrangler/tmp/bundle-tAYR9h/middleware-loader.entry.ts
 var import_strip_cf_connecting_ip_header57 = __toESM(require_strip_cf_connecting_ip_header());
 
-// ../.wrangler/tmp/bundle-iJFSPN/middleware-insertion-facade.js
+// ../.wrangler/tmp/bundle-tAYR9h/middleware-insertion-facade.js
 var import_strip_cf_connecting_ip_header55 = __toESM(require_strip_cf_connecting_ip_header());
 
 // ../node_modules/wrangler/templates/pages-template-worker.ts
@@ -21361,7 +21371,7 @@ var jsonError = /* @__PURE__ */ __name(async (request, env, _ctx, middlewareCtx)
 }, "jsonError");
 var middleware_miniflare3_json_error_default = jsonError;
 
-// ../.wrangler/tmp/bundle-iJFSPN/middleware-insertion-facade.js
+// ../.wrangler/tmp/bundle-tAYR9h/middleware-insertion-facade.js
 var __INTERNAL_WRANGLER_MIDDLEWARE__ = [
   middleware_ensure_req_body_drained_default,
   middleware_miniflare3_json_error_default
@@ -21394,7 +21404,7 @@ function __facade_invoke__(request, env, ctx, dispatch, finalMiddleware) {
 }
 __name(__facade_invoke__, "__facade_invoke__");
 
-// ../.wrangler/tmp/bundle-iJFSPN/middleware-loader.entry.ts
+// ../.wrangler/tmp/bundle-tAYR9h/middleware-loader.entry.ts
 var __Facade_ScheduledController__ = class {
   constructor(scheduledTime, cron, noRetry) {
     this.scheduledTime = scheduledTime;

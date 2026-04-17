@@ -54,6 +54,17 @@ export async function onRequestPost({ request, env }) {
       );
     }
 
+    if (!keyRole) {
+      return jsonResponse(
+        env,
+        {
+          error: 'Invalid Supabase key configured. Use the JWT keys (anon/service_role) that start with "eyJ...", not the new "sb_publishable_*" / "sb_secret_*" keys.',
+          key_source: keySource,
+        },
+        { status: 503 }
+      );
+    }
+
     const record = {
       name: nameValue,
       phone: body.phone || null,
