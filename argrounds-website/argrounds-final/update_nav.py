@@ -7,8 +7,8 @@ nav_html = """<ul id="nav-menu" class="nav-menu">
           <li><a href="/services/">Services</a></li>
           <li><a href="/learning-center/">Learning Center</a></li>
           <li><a href="/gallery.html">Gallery</a></li>
-          <li><a href="/contact.html">About</a></li>
-          <li><a href="/quote.html" class="nav-cta">Book Now</a></li>
+          <li><a href="/about.html">About</a></li>
+          <li><a href="/quote.html" class="nav-cta">Free Quote</a></li>
         </ul>"""
 
 files = glob.glob('**/*.html', recursive=True)
