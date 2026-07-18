@@ -5,7 +5,7 @@ on:
   workflow_dispatch:
 
 permissions:
-  contents: read
+  contents: write
 
 jobs:
   refresh-and-verify:
@@ -14,8 +14,10 @@ jobs:
       run:
         working-directory: argrounds-website/argrounds-final
     steps:
-      - name: Check out repository
+      - name: Check out source branch
         uses: actions/checkout@v4
+        with:
+          ref: ${{ github.head_ref || github.ref_name }}
 
       - name: Set up Node.js
         uses: actions/setup-node@v4
@@ -30,7 +32,21 @@ jobs:
       - name: Verify clean production dependency audit
         run: npm audit --omit=dev --audit-level=high
 
+      - name: Commit regenerated lockfile
+        shell: bash
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add package-lock.json
+          if git diff --cached --quiet; then
+            echo "Lockfile already current."
+            exit 0
+          fi
+          git commit -m "fix: refresh lockfile for ws security override"
+          git push origin "HEAD:${GITHUB_HEAD_REF:-${GITHUB_REF_NAME}}"
+
       - name: Upload regenerated lockfile
+        if: always()
         uses: actions/upload-artifact@v4
         with:
           name: regenerated-package-lock
