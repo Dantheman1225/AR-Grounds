@@ -20,5 +20,8 @@
   "type": "commonjs",
   "dependencies": {
     "@supabase/supabase-js": "^2.103.0"
+  },
+  "overrides": {
+    "ws": "8.21.1"
   }
 }
