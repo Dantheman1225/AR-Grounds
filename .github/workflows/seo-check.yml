@@ -1,0 +1,28 @@
+name: SEO checks
+
+on:
+  pull_request:
+  push:
+    branches:
+      - main
+
+permissions:
+  contents: read
+
+jobs:
+  validate-seo:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Validate SEO middleware syntax
+        run: node --input-type=module --check < argrounds-website/argrounds-final/functions/_middleware.js
+
+      - name: Validate public pages and sitemap
+        run: node scripts/seo-check.mjs

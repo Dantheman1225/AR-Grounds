@@ -4,7 +4,9 @@
   "description": "Grounds Maintenance — Pressure Washing Website",
   "scripts": {
     "dev": "npx wrangler pages dev . --port 8788",
-    "deploy": "npx wrangler pages deploy .",
+    "seo:normalize": "node ../../scripts/normalize-static-seo.mjs",
+    "seo:check": "node ../../scripts/seo-check.mjs",
+    "deploy": "npm run seo:normalize && npm run seo:check && npx wrangler pages deploy .",
     "serve": "npx serve . -p 3000"
   },
   "devDependencies": {
