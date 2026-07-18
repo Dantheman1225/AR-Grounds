@@ -1,0 +1,56 @@
+name: Security diagnostics
+
+on:
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  audit-diagnostics:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: argrounds-website/argrounds-final
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+          cache-dependency-path: argrounds-website/argrounds-final/package-lock.json
+
+      - name: Install locked dependencies
+        run: npm ci
+
+      - name: Capture production audit
+        shell: bash
+        run: |
+          npm audit --omit=dev --json > "$GITHUB_WORKSPACE/security-audit.json" || true
+          node - <<'NODE'
+          const fs = require('fs');
+          const report = JSON.parse(fs.readFileSync(process.env.GITHUB_WORKSPACE + '/security-audit.json', 'utf8'));
+          const summary = {
+            metadata: report.metadata,
+            vulnerabilities: report.vulnerabilities,
+          };
+          fs.writeFileSync(process.env.GITHUB_WORKSPACE + '/security-audit-summary.json', JSON.stringify(summary, null, 2));
+          console.log(JSON.stringify(summary, null, 2));
+          NODE
+
+      - name: Upload audit diagnostics
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: security-audit-diagnostics
+          path: |
+            security-audit.json
+            security-audit-summary.json
+          if-no-files-found: error
+
+      - name: Enforce high-severity audit
+        run: npm audit --omit=dev --audit-level=high
