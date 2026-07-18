@@ -18,6 +18,10 @@ const excludedFiles = new Set([
 const errors = [];
 const warnings = [];
 
+function isHtmlSnippet(filename) {
+  return filename.endsWith('-snippet.html');
+}
+
 function walkHtml(dir) {
   const files = [];
   for (const entry of fs.readdirSync(dir, { withFileTypes: true })) {
@@ -26,7 +30,11 @@ function walkHtml(dir) {
     if (entry.isDirectory()) {
       if (entry.name === 'admin') continue;
       files.push(...walkHtml(fullPath));
-    } else if (entry.isFile() && entry.name.endsWith('.html')) {
+    } else if (
+      entry.isFile() &&
+      entry.name.endsWith('.html') &&
+      !isHtmlSnippet(entry.name)
+    ) {
       files.push(fullPath);
     }
   }
