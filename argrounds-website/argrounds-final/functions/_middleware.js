@@ -1,5 +1,7 @@
 const SITE_ORIGIN = 'https://argrounds.com';
 const SOCIAL_IMAGE = `${SITE_ORIGIN}/assets/images/hero/hero-1.png`;
+const BUSINESS_ID = `${SITE_ORIGIN}/#business`;
+const WEBSITE_ID = `${SITE_ORIGIN}/#website`;
 
 const CLEAN_FILE_ROUTES = new Set([
   '/about',
@@ -25,6 +27,30 @@ const DIRECTORY_ROUTES = new Set([
   '/learning-center/how-often-should-you-clean-a-driveway',
   '/learning-center/why-sidewalks-turn-black',
   '/learning-center/how-to-improve-curb-appeal-with-pressure-washing',
+]);
+
+const PAGE_TITLES = new Map([
+  ['/', 'Grounds Maintenance'],
+  ['/about', 'About Grounds Maintenance'],
+  ['/contact', 'Contact Grounds Maintenance'],
+  ['/faq', 'Frequently Asked Questions'],
+  ['/gallery', 'Before and After Gallery'],
+  ['/quote', 'Request a Free Quote'],
+  ['/services/', 'Pressure Washing Services'],
+  ['/services/driveway-cleaning/', 'Driveway Cleaning'],
+  ['/services/sidewalk-walkway-cleaning/', 'Sidewalk and Walkway Cleaning'],
+  ['/services/patio-paver-cleaning/', 'Patio and Paver Cleaning'],
+  ['/services/deck-cleaning/', 'Deck Cleaning'],
+  ['/services/fence-cleaning/', 'Fence Cleaning'],
+  ['/services/porch-entryway-cleaning/', 'Porch and Entryway Cleaning'],
+  ['/services/storefront-entry-cleaning/', 'Storefront and Entry Cleaning'],
+  ['/learning-center/', 'Pressure Washing Learning Center'],
+  ['/learning-center/what-is-pressure-washing/', 'What Is Pressure Washing?'],
+  ['/learning-center/pressure-washing-vs-power-washing/', 'Pressure Washing vs. Power Washing'],
+  ['/learning-center/what-surfaces-can-be-pressure-washed/', 'What Surfaces Can Be Pressure Washed?'],
+  ['/learning-center/how-often-should-you-clean-a-driveway/', 'How Often Should You Clean a Driveway?'],
+  ['/learning-center/why-sidewalks-turn-black/', 'Why Sidewalks Turn Black'],
+  ['/learning-center/how-to-improve-curb-appeal-with-pressure-washing/', 'How to Improve Curb Appeal With Pressure Washing'],
 ]);
 
 function normalizePath(pathname) {
@@ -70,6 +96,137 @@ function isPrivateOrUtilityPath(pathname, status) {
   );
 }
 
+function humanizeSlug(slug) {
+  return slug
+    .split('-')
+    .filter(Boolean)
+    .map((word) => word.charAt(0).toUpperCase() + word.slice(1))
+    .join(' ');
+}
+
+function getPageTitle(pathname) {
+  if (PAGE_TITLES.has(pathname)) return PAGE_TITLES.get(pathname);
+  const slug = pathname.split('/').filter(Boolean).at(-1);
+  return slug ? humanizeSlug(slug) : 'Grounds Maintenance';
+}
+
+function buildBreadcrumb(pathname) {
+  const segments = pathname.split('/').filter(Boolean);
+  const items = [
+    {
+      '@type': 'ListItem',
+      position: 1,
+      name: 'Home',
+      item: `${SITE_ORIGIN}/`,
+    },
+  ];
+
+  let partial = '';
+  segments.forEach((segment, index) => {
+    partial += `/${segment}`;
+    const normalized = normalizePath(partial);
+    const isLast = index === segments.length - 1;
+    const name =
+      segment === 'services'
+        ? 'Services'
+        : segment === 'learning-center'
+          ? 'Learning Center'
+          : isLast
+            ? getPageTitle(pathname)
+            : humanizeSlug(segment);
+
+    items.push({
+      '@type': 'ListItem',
+      position: items.length + 1,
+      name,
+      item: `${SITE_ORIGIN}${normalized}`,
+    });
+  });
+
+  return {
+    '@type': 'BreadcrumbList',
+    '@id': `${SITE_ORIGIN}${pathname}#breadcrumb`,
+    itemListElement: items,
+  };
+}
+
+function buildStructuredData(pathname) {
+  const canonicalUrl = `${SITE_ORIGIN}${pathname}`;
+  const title = getPageTitle(pathname);
+  const graph = [
+    {
+      '@type': 'LocalBusiness',
+      '@id': BUSINESS_ID,
+      name: 'Grounds Maintenance',
+      url: `${SITE_ORIGIN}/`,
+      telephone: '+1-501-961-0788',
+      image: SOCIAL_IMAGE,
+      priceRange: '$$',
+      areaServed: [
+        { '@type': 'City', name: 'Little Rock' },
+        { '@type': 'City', name: 'North Little Rock' },
+        { '@type': 'City', name: 'Sherwood' },
+        { '@type': 'AdministrativeArea', name: 'Central Arkansas' },
+      ],
+      sameAs: [
+        'https://www.facebook.com/share/17FhywEE3p/?mibextid=wwXIfr',
+        'https://www.instagram.com/ground_maintenance',
+        'https://www.tiktok.com/@grounds_maintenance',
+        'https://youtube.com/@grounds_maintenance',
+      ],
+    },
+    {
+      '@type': 'WebSite',
+      '@id': WEBSITE_ID,
+      url: `${SITE_ORIGIN}/`,
+      name: 'Grounds Maintenance',
+      publisher: { '@id': BUSINESS_ID },
+      inLanguage: 'en-US',
+    },
+    {
+      '@type': 'WebPage',
+      '@id': `${canonicalUrl}#webpage`,
+      url: canonicalUrl,
+      name: title,
+      isPartOf: { '@id': WEBSITE_ID },
+      about: { '@id': BUSINESS_ID },
+      breadcrumb: { '@id': `${canonicalUrl}#breadcrumb` },
+      primaryImageOfPage: {
+        '@type': 'ImageObject',
+        url: SOCIAL_IMAGE,
+      },
+      inLanguage: 'en-US',
+    },
+    buildBreadcrumb(pathname),
+  ];
+
+  if (pathname.startsWith('/services/') && pathname !== '/services/') {
+    graph.push({
+      '@type': 'Service',
+      '@id': `${canonicalUrl}#service`,
+      name: title,
+      serviceType: title,
+      url: canonicalUrl,
+      provider: { '@id': BUSINESS_ID },
+      areaServed: { '@type': 'AdministrativeArea', name: 'Central Arkansas' },
+    });
+  }
+
+  if (pathname.startsWith('/learning-center/') && pathname !== '/learning-center/') {
+    graph.push({
+      '@type': 'Article',
+      '@id': `${canonicalUrl}#article`,
+      headline: title,
+      mainEntityOfPage: { '@id': `${canonicalUrl}#webpage` },
+      publisher: { '@id': BUSINESS_ID },
+      image: SOCIAL_IMAGE,
+      inLanguage: 'en-US',
+    });
+  }
+
+  return JSON.stringify({ '@context': 'https://schema.org', '@graph': graph }).replaceAll('<', '\\u003c');
+}
+
 class RemoveElementHandler {
   element(element) {
     element.remove();
@@ -77,9 +234,10 @@ class RemoveElementHandler {
 }
 
 class HeadMetadataHandler {
-  constructor({ canonicalUrl, noindex }) {
+  constructor({ canonicalUrl, noindex, pathname }) {
     this.canonicalUrl = canonicalUrl;
     this.noindex = noindex;
+    this.pathname = pathname;
   }
 
   element(element) {
@@ -93,6 +251,7 @@ class HeadMetadataHandler {
 
     const canonical = escapeAttribute(this.canonicalUrl);
     const socialImage = escapeAttribute(SOCIAL_IMAGE);
+    const structuredData = buildStructuredData(this.pathname);
 
     element.append(
       [
@@ -102,6 +261,7 @@ class HeadMetadataHandler {
         '<meta property="og:image:alt" content="Grounds Maintenance pressure washing and exterior property services in Central Arkansas">',
         '<meta name="twitter:card" content="summary_large_image">',
         `<meta name="twitter:image" content="${socialImage}">`,
+        `<script type="application/ld+json">${structuredData}</script>`,
       ].join(''),
       { html: true },
     );
@@ -142,7 +302,8 @@ export async function onRequest(context) {
     .on('meta[name="twitter:card"]', new RemoveElementHandler())
     .on('meta[name="twitter:image"]', new RemoveElementHandler())
     .on('meta[name="robots"]', new RemoveElementHandler())
-    .on('head', new HeadMetadataHandler({ canonicalUrl, noindex }))
+    .on('script[type="application/ld+json"]', new RemoveElementHandler())
+    .on('head', new HeadMetadataHandler({ canonicalUrl, noindex, pathname: normalizedPath }))
     .transform(response);
 
   const headers = new Headers(transformed.headers);
