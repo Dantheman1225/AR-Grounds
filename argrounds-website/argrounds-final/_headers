@@ -1,0 +1,14 @@
+/admin/*
+  X-Robots-Tag: noindex, nofollow, noarchive
+
+/thank-you
+  X-Robots-Tag: noindex, nofollow, noarchive
+
+/thank-you.html
+  X-Robots-Tag: noindex, nofollow, noarchive
+
+/test_svg
+  X-Robots-Tag: noindex, nofollow, noarchive
+
+/test_svg.html
+  X-Robots-Tag: noindex, nofollow, noarchive
