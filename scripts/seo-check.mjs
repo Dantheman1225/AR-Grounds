@@ -1,7 +1,9 @@
 import fs from 'node:fs';
 import path from 'node:path';
+import { fileURLToPath } from 'node:url';
 
-const repoRoot = process.cwd();
+const scriptDir = path.dirname(fileURLToPath(import.meta.url));
+const repoRoot = path.resolve(scriptDir, '..');
 const siteRoot = path.join(repoRoot, 'argrounds-website', 'argrounds-final');
 const sitemapPath = path.join(siteRoot, 'sitemap.xml');
 const robotsPath = path.join(siteRoot, 'robots.txt');
