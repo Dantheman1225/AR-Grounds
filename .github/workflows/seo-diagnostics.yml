@@ -1,0 +1,43 @@
+name: SEO diagnostics
+
+on:
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  seo-diagnostics:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+
+      - name: Capture SEO validation output
+        id: seo
+        shell: bash
+        run: |
+          set +e
+          node scripts/seo-check.mjs > seo-check.log 2>&1
+          status=$?
+          set -e
+          cat seo-check.log
+          echo "exit_code=$status" >> "$GITHUB_OUTPUT"
+
+      - name: Upload SEO diagnostics
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: seo-check-diagnostics
+          path: seo-check.log
+          if-no-files-found: error
+
+      - name: Enforce SEO validation
+        if: steps.seo.outputs.exit_code != '0'
+        run: exit 1
