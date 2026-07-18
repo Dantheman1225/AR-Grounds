@@ -22,13 +22,23 @@ const topLevelRoutes = new Set([
   '/quote',
 ]);
 
+function isHtmlSnippet(filename) {
+  return filename.endsWith('-snippet.html');
+}
+
 function walkHtml(dir) {
   const files = [];
   for (const entry of fs.readdirSync(dir, { withFileTypes: true })) {
     if (entry.name === 'node_modules' || entry.name === '.wrangler') continue;
     const fullPath = path.join(dir, entry.name);
     if (entry.isDirectory()) files.push(...walkHtml(fullPath));
-    if (entry.isFile() && entry.name.endsWith('.html')) files.push(fullPath);
+    if (
+      entry.isFile() &&
+      entry.name.endsWith('.html') &&
+      !isHtmlSnippet(entry.name)
+    ) {
+      files.push(fullPath);
+    }
   }
   return files;
 }
