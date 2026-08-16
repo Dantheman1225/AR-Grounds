@@ -57,6 +57,49 @@ Minimum setup:
 
 GitHub Pages alone will not run the API routes, D1 persistence, proof endpoints, or live weather routes in this app.
 
+### Deploying to Cloudflare Workers
+
+One-time, from the Cloudflare account that owns argrounds.com:
+
+```bash
+npx wrangler d1 create grounds-command
+npx wrangler r2 bucket create grounds-command-proof
+```
+
+`d1 create` prints a database id. Export it (and keep it out of Git — it belongs
+in CI secrets or your shell profile, not a committed file):
+
+```bash
+export CLOUDFLARE_D1_DATABASE_ID="<id printed above>"
+npm run deploy:cf
+```
+
+`db/state.ts` runs `CREATE TABLE IF NOT EXISTS` on every read and write, so a
+brand-new empty database self-initializes — there is no migration step before
+the first deploy.
+
+**Where the deploy config actually lives.** `wrangler deploy` does not read a
+`wrangler.jsonc` at the repo root — `@cloudflare/vite-plugin` generates
+`dist/server/wrangler.json` from the `config` block in `vite.config.ts`, and that
+generated file is what ships. Adding a second root-level config silently
+*merges*, producing duplicate `DB`/`BUCKET` bindings. Change bindings in
+`vite.config.ts` only. Verify any change with:
+
+```bash
+npm run build:cf && npx wrangler deploy --dry-run
+```
+
+which prints the resolved binding table (`DB`, `BUCKET`, `IMAGES`, `ASSETS`).
+
+`npm run build` is the ChatGPT Sites path — it wraps `vinext build` in the Sites
+lifecycle helpers and needs GNU `timeout` plus the `SITES_*` environment. Use
+`npm run build:cf` for Cloudflare; it calls `vinext build` directly.
+
+**Access control.** The command routes and the `/api/state` and `/api/proof`
+handlers perform no authentication of their own — `GET /api/state` returns the
+whole operations record and `PUT` overwrites it. Put a Cloudflare Access policy
+in front of the deployed hostname before pointing a public domain at it.
+
 ## ARgrounds.com Route Plan
 
 When this app is mounted on ARgrounds.com, the intended command entry points are:
