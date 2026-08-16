@@ -99,3 +99,26 @@ test("home command center is operations-first and role-ready", async () => {
   assert.match(liveFinance, /Stripe/);
   assert.match(liveFinance, /QuickBooks/);
 });
+
+test("ARgrounds command routes expose admin and worker entry points", async () => {
+  const command = await source("app/grounds-command.tsx");
+  const entry = await source("app/command-entry.tsx");
+  const admin = await source("app/admin-command/page.tsx");
+  const adminAlias = await source("app/admincommand/page.tsx");
+  const worker = await source("app/worker-command/page.tsx");
+  const workerAlias = await source("app/workercommand/page.tsx");
+  const workerShortAlias = await source("app/worker/page.tsx");
+  const fieldAlias = await source("app/field/page.tsx");
+  const fieldCommandAlias = await source("app/field-command/page.tsx");
+
+  assert.match(command, /routeMode\?: ProfileMode/);
+  assert.match(command, /readRoute\(routeView, !routeMode\)/);
+  assert.match(entry, /routeMode=\{profileMode\}/);
+  assert.match(admin, /profileMode="owner"/);
+  assert.match(worker, /profileMode="field"/);
+  assert.match(adminAlias, /redirect\("\/admin-command"\)/);
+  assert.match(workerAlias, /redirect\("\/worker-command"\)/);
+  assert.match(workerShortAlias, /redirect\("\/worker-command"\)/);
+  assert.match(fieldAlias, /redirect\("\/worker-command"\)/);
+  assert.match(fieldCommandAlias, /redirect\("\/worker-command"\)/);
+});

@@ -54,6 +54,20 @@ Minimum setup:
 GitHub Pages alone will not run the API routes, D1 persistence, proof endpoints,
 or live weather routes in this app.
 
+## ARgrounds.com Route Plan
+
+When this app is mounted on ARgrounds.com, the intended command entry points are:
+
+| URL path | Purpose |
+| --- | --- |
+| `/admin-command` | Owner/admin command center |
+| `/admincommand` | Alias for `/admin-command` |
+| `/worker-command` | Worker/field command center |
+| `/workercommand` | Alias for `/worker-command` |
+| `/worker` | Alias for `/worker-command` |
+| `/field` | Alias for `/worker-command` |
+| `/field-command` | Alias for `/worker-command` |
+
 ## Workspace Auth Headers
 
 OpenAI workspace sites can read the current user's email from
