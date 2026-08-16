@@ -1,14 +1,23 @@
 # Grounds Command
 
-Grounds Command is the operations dashboard for Grounds Maintenance LLC's
-Arkansas site work. It tracks routes, site maps, visits, proof photos, QC,
-crew assignments, pesticide planning, service tickets, invoice/payment status,
-and live weather/finance placeholders.
+Grounds Command is the operations dashboard for Grounds Maintenance LLC's Arkansas site work. It tracks routes, site maps, visits, proof photos, QC, crew assignments, pesticide planning, service tickets, invoice/payment status, and live weather/finance placeholders.
 
-This project was exported from ChatGPT Sites as a full-stack
-[vinext](https://github.com/cloudflare/vinext) app. It is not a plain static
-GitHub Pages site. To run it live from GitHub, deploy it to a Node/Cloudflare
-Workers-compatible host and provide the Cloudflare D1 binding named `DB`.
+This project was exported from ChatGPT Sites as a full-stack [vinext](https://github.com/cloudflare/vinext) app. It is not a plain static GitHub Pages site. To run it live from GitHub, deploy it to a Node/Cloudflare Workers-compatible host and provide the Cloudflare D1 binding named `DB`.
+
+## Public Access Policy
+
+Grounds Command is intended to open directly on ARgrounds.com without a ChatGPT login gate.
+
+The app routes are public/anonymous-compatible by default:
+
+- `/` opens the main Grounds Command dashboard.
+- `/admin-command` opens the owner/admin command center.
+- `/worker-command` opens the worker/field command center.
+- Alias routes redirect straight into those command pages.
+
+Do not add `requireChatGPTUser`, `/signin-with-chatgpt`, `/signout-with-chatgpt`, `/callback`, or any OpenAI workspace-auth gate back into this project unless protected user accounts are intentionally added later.
+
+If a deployed preview still asks visitors to sign in, that restriction is coming from the hosting/access-control layer, not from the app route code.
 
 ## Prerequisites
 
@@ -28,20 +37,15 @@ Scripts that need writable project-scoped home, npm, XDG, and temporary paths us
 ## Included Shape
 
 - Main dashboard code lives under `app/`.
-- Seed route, site, crew, inventory, visit, proof, and payment state lives under
-  `lib/`.
+- Seed route, site, crew, inventory, visit, proof, and payment state lives under `lib/`.
 - Site map images live under `public/maps/`.
-- The current D1 schema and seed-state storage code live under `db/` and
-  `drizzle/`.
-- `.openai/hosting.json` declares the ChatGPT Sites logical D1/R2 bindings.
+- The current D1 schema and seed-state storage code live under `db/` and `drizzle/`.
+- `.openai/hosting.json` declares the ChatGPT Sites logical D1/R2 bindings for the exported project.
 - `vite.config.ts` simulates declared bindings for local development.
-- `app/chatgpt-auth.ts` provides optional ChatGPT sign-in helpers for Sites.
 
 ## Deployment Notes
 
-For a GitHub-backed production move, use a host that can run the included
-Cloudflare Worker output from `npm run build`. The build emits
-`dist/server/index.js` and expects a callable `fetch(request, env, ctx)` export.
+For a GitHub-backed production move, use a host that can run the included Cloudflare Worker output from `npm run build`. The build emits `dist/server/index.js` and expects a callable `fetch(request, env, ctx)` export.
 
 Minimum setup:
 
@@ -51,8 +55,7 @@ Minimum setup:
 4. Configure a Cloudflare D1 database binding named `DB`.
 5. Deploy the built Worker artifact from `dist/`.
 
-GitHub Pages alone will not run the API routes, D1 persistence, proof endpoints,
-or live weather routes in this app.
+GitHub Pages alone will not run the API routes, D1 persistence, proof endpoints, or live weather routes in this app.
 
 ## ARgrounds.com Route Plan
 
@@ -60,6 +63,7 @@ When this app is mounted on ARgrounds.com, the intended command entry points are
 
 | URL path | Purpose |
 | --- | --- |
+| `/` | Main Grounds Command dashboard |
 | `/admin-command` | Owner/admin command center |
 | `/admincommand` | Alias for `/admin-command` |
 | `/worker-command` | Worker/field command center |
@@ -67,64 +71,6 @@ When this app is mounted on ARgrounds.com, the intended command entry points are
 | `/worker` | Alias for `/worker-command` |
 | `/field` | Alias for `/worker-command` |
 | `/field-command` | Alias for `/worker-command` |
-
-## Workspace Auth Headers
-
-OpenAI workspace sites can read the current user's email from
-`oai-authenticated-user-email`.
-
-SIWC-authenticated workspace sites may also receive
-`oai-authenticated-user-full-name` when the user's SIWC profile has a non-empty
-`name` claim. The full-name value is percent-encoded UTF-8 and is accompanied by
-`oai-authenticated-user-full-name-encoding: percent-encoded-utf-8`.
-
-Treat the full name as optional and fall back to email when it is absent:
-
-```tsx
-import { headers } from "next/headers";
-
-export default async function Home() {
-  const requestHeaders = await headers();
-  const email = requestHeaders.get("oai-authenticated-user-email");
-  const encodedFullName = requestHeaders.get("oai-authenticated-user-full-name");
-  const fullName =
-    encodedFullName &&
-    requestHeaders.get("oai-authenticated-user-full-name-encoding") ===
-      "percent-encoded-utf-8"
-      ? decodeURIComponent(encodedFullName)
-      : null;
-
-  const displayName = fullName ?? email;
-  // ...
-}
-```
-
-## Optional Dispatch-Owned ChatGPT Sign-In
-
-Import the ready-to-use helpers from `app/chatgpt-auth.ts` when the site needs
-optional or required ChatGPT sign-in:
-
-- Use `getChatGPTUser()` for optional signed-in UI.
-- Use `requireChatGPTUser(returnTo)` for server-rendered pages that should send
-  anonymous visitors through Sign in with ChatGPT.
-- Use `chatGPTSignInPath(returnTo)` and `chatGPTSignOutPath(returnTo)` for
-  browser links or actions.
-- Pass a same-origin relative `returnTo` path for the destination after sign-in
-  or sign-out. The helper validates and safely encodes it.
-- Mark protected pages with `export const dynamic = "force-dynamic"` because
-  they depend on per-request identity headers.
-
-Dispatch owns `/signin-with-chatgpt`, `/signout-with-chatgpt`, `/callback`, the
-OAuth cookies, and identity header injection. Do not implement app routes for
-those reserved paths. Routes that do not import and call the helper remain
-anonymous-compatible.
-
-SIWC establishes identity only; it does not prove workspace membership. Use the
-Sites hosting platform's access policy controls for workspace-wide restrictions,
-or enforce explicit server-side membership or allowlist checks.
-
-Use SIWC for account pages, user-specific dashboards, saved records, and write
-actions tied to the current ChatGPT user. Leave public content anonymous.
 
 ## Diagnostic Commands
 
