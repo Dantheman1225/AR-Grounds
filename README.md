@@ -174,6 +174,13 @@ list only takes effect once the **site** is redeployed. Deploying the
 - `npm test`: build, validate, and verify the rendered development-preview metadata
 - `npm run validate:artifact`: recheck an existing artifact's manifest and ESM `default.fetch` export
 - `npm run db:generate`: generate Drizzle migrations after schema changes
+- `node scripts/verify-command-routes.mjs`: check that the deployed argrounds.com
+  really sends the command entry points to `command.argrounds.com`
+
+Run `verify-command-routes.mjs` after deploying the site. The redirects live in
+the site's Pages Functions, so a correct `_middleware.js` on `main` proves
+nothing about production — while the site lags, `/admin-command` returns the
+marketing 404 and nothing in the repo looks wrong.
 
 Use build and validation commands for targeted diagnosis after a remote failure, not as part of the normal checkpoint path.
 
