@@ -1,3 +1,9 @@
+import { env } from "cloudflare:workers";
+import { canRead, canWrite, denied, resolveIdentity } from "../../access-identity";
+
+// Identity depends on per-request headers, so nothing here may be prerendered.
+export const dynamic = "force-dynamic";
+
 function proofBucket() {
   const runtime = globalThis as typeof globalThis & {
     __GROUNDS_COMMAND_BUCKET__?: R2Bucket;
@@ -13,6 +19,8 @@ function safeKey(value: string | null) {
 }
 
 export async function POST(request: Request) {
+  const identity = await resolveIdentity(request, env as never);
+  if (!canWrite(identity)) return denied(identity, "upload proof photos");
   try {
     const form = await request.formData();
     const file = form.get("file");
@@ -32,6 +40,8 @@ export async function POST(request: Request) {
 }
 
 export async function GET(request: Request) {
+  const identity = await resolveIdentity(request, env as never);
+  if (!canRead(identity)) return denied(identity, "view proof photos");
   try {
     const key = safeKey(new URL(request.url).searchParams.get("key"));
     if (!key) return new Response("Invalid proof key.", { status: 400 });
@@ -48,6 +58,8 @@ export async function GET(request: Request) {
 }
 
 export async function DELETE(request: Request) {
+  const identity = await resolveIdentity(request, env as never);
+  if (!canWrite(identity)) return denied(identity, "delete proof photos");
   try {
     const key = safeKey(new URL(request.url).searchParams.get("key"));
     if (!key) return Response.json({ error: "Invalid proof key." }, { status: 400 });

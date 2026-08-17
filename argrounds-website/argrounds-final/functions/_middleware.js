@@ -328,7 +328,15 @@ export async function onRequest(context) {
   // body survive for the API endpoints.
   if (isCommandPath(requestUrl.pathname)) {
     const target = new URL(requestUrl.pathname + requestUrl.search, COMMAND_ORIGIN);
-    const upstream = await fetch(new Request(target, context.request));
+    const forwarded = new Request(target, context.request);
+    // Strip any client-supplied Access identity headers. Cloudflare sets these
+    // on requests that pass Access, but a caller can send them too, and this
+    // proxy would otherwise pass them straight through as if they were genuine.
+    // The signed CF_Authorization cookie and Cf-Access-Jwt-Assertion survive,
+    // and the Worker verifies that signature itself.
+    forwarded.headers.delete('Cf-Access-Authenticated-User-Email');
+    forwarded.headers.delete('Cf-Access-Authenticated-User-Id');
+    const upstream = await fetch(forwarded);
     const proxied = new Response(upstream.body, upstream);
     proxied.headers.set('X-Robots-Tag', 'noindex, nofollow, noarchive');
     return proxied;
