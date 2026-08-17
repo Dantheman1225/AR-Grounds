@@ -62,6 +62,14 @@ export default defineConfig(async () => {
   const { cloudflare } = await import("@cloudflare/vite-plugin");
 
   return {
+    build: {
+      // Emit hashed JS/CSS under /command-assets/ instead of the default
+      // /assets/. The marketing site on argrounds.com already owns /assets/
+      // (brand, gallery, hero images), and Cloudflare Worker routes match on
+      // plain `*` wildcards, so a route for /assets/* would hijack the site's
+      // images. A distinct directory lets both live on the same domain.
+      assetsDir: "command-assets",
+    },
     server: {
       host: "0.0.0.0",
       allowedHosts: ["terminal.local"],

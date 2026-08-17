@@ -11,18 +11,3 @@
 /quote/ /quote 301
 /services /services/ 301
 /learning-center /learning-center/ 301
-
-# Grounds Command entry points. The back office is a separate Cloudflare Worker
-# deployment (it needs D1, R2, and server rendering), so these hand off to it
-# rather than serving from this static site.
-#
-# 302 not 301: the target moves as soon as command.argrounds.com is set up as
-# a Custom Domain on the Worker, and a cached permanent redirect would be very
-# hard to walk back out of visitors' browsers.
-/admin-command   https://grounds-command.grounds-helpme.workers.dev/admin-command   302
-/admincommand    https://grounds-command.grounds-helpme.workers.dev/admin-command   302
-/worker-command  https://grounds-command.grounds-helpme.workers.dev/worker-command  302
-/workercommand   https://grounds-command.grounds-helpme.workers.dev/worker-command  302
-/worker          https://grounds-command.grounds-helpme.workers.dev/worker-command  302
-/field           https://grounds-command.grounds-helpme.workers.dev/worker-command  302
-/field-command   https://grounds-command.grounds-helpme.workers.dev/worker-command  302

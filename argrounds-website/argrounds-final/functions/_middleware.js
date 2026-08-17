@@ -1,4 +1,47 @@
 const SITE_ORIGIN = 'https://argrounds.com';
+
+// Grounds Command runs as a separate Cloudflare Worker (it needs D1, R2 and
+// server rendering). Proxying it from here keeps the address bar on
+// argrounds.com/admin-command instead of bouncing to another hostname.
+//
+// Doing this in one function rather than a dozen dashboard Worker routes also
+// keeps the path list reviewable in the repo, next to the site it has to
+// coexist with.
+const COMMAND_ORIGIN = 'https://command.argrounds.com';
+
+// Exact page routes owned by the Worker, plus their aliases.
+const COMMAND_ROUTES = new Set([
+  '/admin-command',
+  '/admincommand',
+  '/worker-command',
+  '/workercommand',
+  '/worker',
+  '/field',
+  '/field-command',
+  '/workspace',
+]);
+
+// Directory prefixes the Worker serves. Its hashed JS/CSS is emitted under
+// /command-assets/ specifically so it does not collide with this site's
+// /assets/ (brand, gallery, hero images) - see build.assetsDir in
+// vite.config.ts. /api/ entries are listed individually because this site owns
+// /api/leads-create, /api/contact and friends.
+const COMMAND_PREFIXES = [
+  '/command-assets/',
+  '/brand/',
+  '/maps/',
+  '/api/state',
+  '/api/proof',
+  '/api/live/',
+];
+
+function isCommandPath(pathname) {
+  if (COMMAND_ROUTES.has(pathname)) return true;
+  for (const route of COMMAND_ROUTES) {
+    if (pathname.startsWith(`${route}/`)) return true;
+  }
+  return COMMAND_PREFIXES.some((prefix) => pathname.startsWith(prefix));
+}
 const SOCIAL_IMAGE = `${SITE_ORIGIN}/assets/images/hero/hero-1.png`;
 const BUSINESS_ID = `${SITE_ORIGIN}/#business`;
 const WEBSITE_ID = `${SITE_ORIGIN}/#website`;
@@ -277,6 +320,18 @@ export async function onRequest(context) {
     requestUrl.protocol = 'https:';
     requestUrl.pathname = normalizedPath;
     return Response.redirect(requestUrl.toString(), 301);
+  }
+
+  // Hand Grounds Command paths to the Worker before any normalization or SEO
+  // rewriting runs - those rules are written for the marketing pages and would
+  // mangle an app route. The request is forwarded whole, so method, headers and
+  // body survive for the API endpoints.
+  if (isCommandPath(requestUrl.pathname)) {
+    const target = new URL(requestUrl.pathname + requestUrl.search, COMMAND_ORIGIN);
+    const upstream = await fetch(new Request(target, context.request));
+    const proxied = new Response(upstream.body, upstream);
+    proxied.headers.set('X-Robots-Tag', 'noindex, nofollow, noarchive');
+    return proxied;
   }
 
   if (requestUrl.pathname !== normalizedPath) {
