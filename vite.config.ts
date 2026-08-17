@@ -20,8 +20,7 @@ const { d1, r2 } = hostingConfig;
 const D1_DATABASE_NAME = process.env.CLOUDFLARE_D1_DATABASE_NAME ?? "grounds-command";
 const D1_DATABASE_ID =
   process.env.CLOUDFLARE_D1_DATABASE_ID ?? "72bb3907-1b22-40bc-ba03-bf85f0af477e";
-const R2_BUCKET_NAME =
-  process.env.CLOUDFLARE_R2_BUCKET_NAME ?? "grounds-command-proof";
+const R2_BUCKET_NAME = process.env.CLOUDFLARE_R2_BUCKET_NAME ?? "ar-grounds";
 
 // macOS Seatbelt blocks FSEvents, so Codex previews need polling for HMR.
 const isCodexSeatbeltSandbox = process.env.CODEX_SANDBOX === "seatbelt";
