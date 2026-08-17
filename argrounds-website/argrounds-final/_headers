@@ -1,0 +1,36 @@
+/admin/*
+  X-Robots-Tag: noindex, nofollow, noarchive
+
+/thank-you
+  X-Robots-Tag: noindex, nofollow, noarchive
+
+/thank-you.html
+  X-Robots-Tag: noindex, nofollow, noarchive
+
+/test_svg
+  X-Robots-Tag: noindex, nofollow, noarchive
+
+/test_svg.html
+  X-Robots-Tag: noindex, nofollow, noarchive
+
+# Grounds Command entry points - private back office, never index.
+/admin-command
+  X-Robots-Tag: noindex, nofollow, noarchive
+
+/admincommand
+  X-Robots-Tag: noindex, nofollow, noarchive
+
+/worker-command
+  X-Robots-Tag: noindex, nofollow, noarchive
+
+/workercommand
+  X-Robots-Tag: noindex, nofollow, noarchive
+
+/worker
+  X-Robots-Tag: noindex, nofollow, noarchive
+
+/field
+  X-Robots-Tag: noindex, nofollow, noarchive
+
+/field-command
+  X-Robots-Tag: noindex, nofollow, noarchive

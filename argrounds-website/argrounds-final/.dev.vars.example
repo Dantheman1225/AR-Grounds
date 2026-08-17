@@ -1,0 +1,11 @@
+# Copy this file to .dev.vars for local development.
+# Never commit .dev.vars or real credentials.
+
+SUPABASE_URL=https://your-project-ref.supabase.co
+SUPABASE_SERVICE_ROLE_KEY=replace-with-a-rotated-service-role-key
+SUPABASE_ANON_KEY=replace-with-your-public-anon-key
+RESEND_API_KEY=replace-with-your-resend-api-key
+FROM_EMAIL=Grounds Maintenance <noreply@example.com>
+ADMIN_EMAIL=admin@example.com
+ADMIN_PASSWORD=replace-with-a-strong-unique-password
+ALLOWED_ORIGIN=http://localhost:8788

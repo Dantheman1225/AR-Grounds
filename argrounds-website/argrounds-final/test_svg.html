@@ -1,0 +1,16 @@
+<!DOCTYPE html>
+<html>
+<body style="background: #1a1a1a; color: white;">
+  <div style="padding: 50px;">
+    <h2>Original SVG from Brand Media</h2>
+    <div id="svg-container"></div>
+    <script>
+      fetch('../../Brand Media/Land Scape Banner SVG code.svg')
+        .then(r => r.text())
+        .then(text => {
+          document.getElementById('svg-container').innerHTML = text;
+        });
+    </script>
+  </div>
+</body>
+</html>

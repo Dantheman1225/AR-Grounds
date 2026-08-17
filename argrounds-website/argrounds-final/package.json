@@ -1,0 +1,27 @@
+{
+  "name": "argrounds",
+  "version": "1.0.0",
+  "description": "Grounds Maintenance — Pressure Washing Website",
+  "scripts": {
+    "dev": "npx wrangler pages dev . --port 8788",
+    "seo:normalize": "node ../../scripts/normalize-static-seo.mjs",
+    "seo:check": "node ../../scripts/seo-check.mjs",
+    "deploy": "npm run seo:normalize && npm run seo:check && npx wrangler pages deploy .",
+    "serve": "npx serve . -p 3000"
+  },
+  "devDependencies": {
+    "serve": "^14.0.0",
+    "wrangler": "^3.0.0"
+  },
+  "main": "index.js",
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "type": "commonjs",
+  "dependencies": {
+    "@supabase/supabase-js": "^2.103.0"
+  },
+  "overrides": {
+    "ws": "8.21.1"
+  }
+}
