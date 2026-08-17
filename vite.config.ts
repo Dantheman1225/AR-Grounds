@@ -10,13 +10,16 @@ const { d1, r2 } = hostingConfig;
 
 // Cloudflare resource names. The @cloudflare/vite-plugin writes these straight
 // into dist/server/wrangler.json, which is the config `wrangler deploy` actually
-// uses - a hand-written wrangler.jsonc at the repo root is ignored. Local dev
-// only needs the names to be stable, so the placeholders below are fine there;
-// a real deploy needs CLOUDFLARE_D1_DATABASE_ID set to the id printed by
-// `npx wrangler d1 create grounds-command`.
+// uses - a hand-written wrangler.jsonc at the repo root is ignored.
+//
+// The D1 id below is the real provisioned database. A database id is an
+// identifier rather than a credential (reaching it still requires account
+// auth), which is why Cloudflare's own docs commit it to wrangler config.
+// Override any of these with the matching environment variable to point a
+// build at a different account or a scratch database.
 const D1_DATABASE_NAME = process.env.CLOUDFLARE_D1_DATABASE_NAME ?? "grounds-command";
 const D1_DATABASE_ID =
-  process.env.CLOUDFLARE_D1_DATABASE_ID ?? SITE_CREATOR_PLACEHOLDER_DATABASE_ID;
+  process.env.CLOUDFLARE_D1_DATABASE_ID ?? "72bb3907-1b22-40bc-ba03-bf85f0af477e";
 const R2_BUCKET_NAME =
   process.env.CLOUDFLARE_R2_BUCKET_NAME ?? "grounds-command-proof";
 
