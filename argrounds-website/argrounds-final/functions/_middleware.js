@@ -1,12 +1,22 @@
 const SITE_ORIGIN = 'https://argrounds.com';
 
 // Grounds Command runs as a separate Cloudflare Worker (it needs D1, R2 and
-// server rendering). Proxying it from here keeps the address bar on
-// argrounds.com/admin-command instead of bouncing to another hostname.
+// server rendering) on its own hostname, and a Cloudflare Access application
+// guards that whole hostname at the edge.
 //
-// Doing this in one function rather than a dozen dashboard Worker routes also
-// keeps the path list reviewable in the repo, next to the site it has to
-// coexist with.
+// These paths are redirected rather than reverse-proxied. A proxy cannot carry
+// a visitor through an Access login: the subrequest leaves this Function
+// without the visitor's CF_Authorization cookie, so Access answers it with a
+// 302 to the login screen instead of the dashboard. The browser then finishes
+// the login on command.argrounds.com anyway - and any same-page
+// fetch('/api/state') from an argrounds.com document turns into a cross-origin
+// redirect to the login host, which fails CORS. Sending the visitor to the
+// hostname Access actually protects is the only arrangement where both the
+// page and its API calls work.
+//
+// Keeping the path list in one function, rather than a dozen dashboard Worker
+// routes, also keeps it reviewable in the repo next to the site it coexists
+// with.
 const COMMAND_ORIGIN = 'https://command.argrounds.com';
 
 // Exact page routes owned by the Worker, plus their aliases.
@@ -322,24 +332,22 @@ export async function onRequest(context) {
     return Response.redirect(requestUrl.toString(), 301);
   }
 
-  // Hand Grounds Command paths to the Worker before any normalization or SEO
-  // rewriting runs - those rules are written for the marketing pages and would
-  // mangle an app route. The request is forwarded whole, so method, headers and
-  // body survive for the API endpoints.
+  // Send Grounds Command paths to the Worker's hostname before any
+  // normalization or SEO rewriting runs - those rules are written for the
+  // marketing pages and would mangle an app route.
+  //
+  // 307 rather than 302: it preserves the method and body, so a stale POST to
+  // argrounds.com/api/proof arrives intact instead of being downgraded to GET.
   if (isCommandPath(requestUrl.pathname)) {
     const target = new URL(requestUrl.pathname + requestUrl.search, COMMAND_ORIGIN);
-    const forwarded = new Request(target, context.request);
-    // Strip any client-supplied Access identity headers. Cloudflare sets these
-    // on requests that pass Access, but a caller can send them too, and this
-    // proxy would otherwise pass them straight through as if they were genuine.
-    // The signed CF_Authorization cookie and Cf-Access-Jwt-Assertion survive,
-    // and the Worker verifies that signature itself.
-    forwarded.headers.delete('Cf-Access-Authenticated-User-Email');
-    forwarded.headers.delete('Cf-Access-Authenticated-User-Id');
-    const upstream = await fetch(forwarded);
-    const proxied = new Response(upstream.body, upstream);
-    proxied.headers.set('X-Robots-Tag', 'noindex, nofollow, noarchive');
-    return proxied;
+    return new Response(null, {
+      status: 307,
+      headers: {
+        location: target.toString(),
+        'X-Robots-Tag': 'noindex, nofollow, noarchive',
+        'Cache-Control': 'no-store',
+      },
+    });
   }
 
   if (requestUrl.pathname !== normalizedPath) {

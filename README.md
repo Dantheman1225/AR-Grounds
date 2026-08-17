@@ -6,18 +6,21 @@ This project was exported from ChatGPT Sites as a full-stack [vinext](https://gi
 
 ## Public Access Policy
 
-Grounds Command is intended to open directly on ARgrounds.com without a ChatGPT login gate.
+Grounds Command must never depend on a ChatGPT login gate.
 
-The app routes are public/anonymous-compatible by default:
+Do not add `requireChatGPTUser`, `/signin-with-chatgpt`, `/signout-with-chatgpt`, `/callback`, or any OpenAI workspace-auth gate back into this project.
+
+The app's own route code stays anonymous-compatible:
 
 - `/` opens the main Grounds Command dashboard.
 - `/admin-command` opens the owner/admin command center.
 - `/worker-command` opens the worker/field command center.
 - Alias routes redirect straight into those command pages.
 
-Do not add `requireChatGPTUser`, `/signin-with-chatgpt`, `/signout-with-chatgpt`, `/callback`, or any OpenAI workspace-auth gate back into this project unless protected user accounts are intentionally added later.
-
-If a deployed preview still asks visitors to sign in, that restriction is coming from the hosting/access-control layer, not from the app route code.
+Authentication is supplied by Cloudflare Access in front of the deployed
+hostname, and authorization by `app/access-identity.ts` — see **Access control**
+under Deployment Notes. A sign-in prompt on a deployed preview is that gate, not
+a workspace-auth gate in the route code.
 
 ## Prerequisites
 
@@ -95,18 +98,56 @@ which prints the resolved binding table (`DB`, `BUCKET`, `IMAGES`, `ASSETS`).
 lifecycle helpers and needs GNU `timeout` plus the `SITES_*` environment. Use
 `npm run build:cf` for Cloudflare; it calls `vinext build` directly.
 
-**Access control.** The command routes and the `/api/state` and `/api/proof`
-handlers perform no authentication of their own — `GET /api/state` returns the
-whole operations record and `PUT` overwrites it. Put a Cloudflare Access policy
-in front of the deployed hostname before pointing a public domain at it.
+**Access control.** Two layers guard the command routes.
+
+Cloudflare Access is the edge gate. An Access application covers all of
+`command.argrounds.com`, so every path on that hostname — pages, `/api/state`,
+`/api/proof` — redirects to the `grounds-crew` Access login until the visitor
+holds a valid session.
+
+`app/access-identity.ts` is the authorization layer inside the Worker. It
+verifies the signed `Cf-Access-Jwt-Assertion` (RS256 against the team JWKS,
+then issuer, audience and expiry) rather than trusting the plain
+`Cf-Access-Authenticated-User-Email` header, because a caller can send that
+header themselves. `OWNER_EMAILS` gets the owner workspace and is the only role
+allowed to `PUT /api/state`; `WORKER_EMAILS` gets the field workspace and may
+read state and upload proof photos.
+
+**Enforcement is opt-in through configuration, and it fails open.** With
+`ACCESS_TEAM_DOMAIN` or `ACCESS_AUD` unset, identity resolves to
+`unconfigured` and every route stays open — deliberately, so a missing variable
+cannot lock the owner out of a live tool. Setting both begins enforcement.
+Set these on the `grounds-command` Worker:
+
+| Variable | Value |
+| --- | --- |
+| `ACCESS_TEAM_DOMAIN` | `grounds-crew.cloudflareaccess.com` |
+| `ACCESS_AUD` | the Access application's Application Audience tag |
+| `OWNER_EMAILS` | comma-separated owner addresses |
+| `WORKER_EMAILS` | comma-separated field-crew addresses |
+
+Read the AUD tag from the Access application in Zero Trust → Access →
+Applications; it is also the `aud` claim in the login redirect from
+`command.argrounds.com`. It identifies an application rather than
+authenticating anything, but the Worker must pin it, because an unexpired
+assertion minted for a *different* Access application would otherwise verify
+against the same team JWKS and pass.
+
+Because Access cannot cover `workers.dev`, disable the workers.dev route on
+`grounds-command` — otherwise that hostname reaches the dashboard with no edge
+gate at all, and with the variables above unset it reaches it with no
+authorization either.
 
 ## ARgrounds.com Route Plan
 
-When this app is mounted on ARgrounds.com, the intended command entry points are:
+The marketing site owns `argrounds.com`; Grounds Command runs on
+`command.argrounds.com`. `functions/_middleware.js` on the site redirects the
+command entry points to that hostname, so the paths below keep working as
+bookmarks and printed links:
 
 | URL path | Purpose |
 | --- | --- |
-| `/` | Main Grounds Command dashboard |
+| `/` | Marketing homepage (the site, not the dashboard) |
 | `/admin-command` | Owner/admin command center |
 | `/admincommand` | Alias for `/admin-command` |
 | `/worker-command` | Worker/field command center |
@@ -114,6 +155,15 @@ When this app is mounted on ARgrounds.com, the intended command entry points are
 | `/worker` | Alias for `/worker-command` |
 | `/field` | Alias for `/worker-command` |
 | `/field-command` | Alias for `/worker-command` |
+| `/workspace` | Alias for the command app |
+
+The same redirect covers the Worker's own subresources and endpoints —
+`/command-assets/`, `/brand/`, `/maps/`, `/api/state`, `/api/proof` and
+`/api/live/` — because the site owns `/assets/` and its own `/api/` handlers.
+
+These redirects live in the site's Pages Functions, so a change to that path
+list only takes effect once the **site** is redeployed. Deploying the
+`grounds-command` Worker does not update them.
 
 ## Diagnostic Commands
 
