@@ -8,6 +8,7 @@ export async function sendEmail(env, { type, lead }) {
     throw new Error('Email configuration missing');
   }
   const internal = type === 'NEW_LEAD_INTERNAL';
+  const stored = lead.storage_saved !== false;
   if (!internal && type !== 'NEW_LEAD_CUSTOMER_CONFIRMATION') throw new Error('Unknown email type');
   const name = lead.name || `${lead.first_name || ''} ${lead.last_name || ''}`.trim();
   const fields = [
@@ -23,10 +24,10 @@ export async function sendEmail(env, { type, lead }) {
   const detailsHTML = fields.map(([label, value]) => `<p><strong>${label}:</strong> ${escapeHTML(value || 'Not provided').replace(/\n/g, '<br>')}</p>`).join('\n');
   const subject = internal ? `New Lead: ${name || 'Website Visitor'}` : 'Your Quote Request - Grounds Maintenance';
   const intro = internal
-    ? (lead.email ? 'A website service request has been saved. Reply to this email to contact the requester, or use the phone number below.' : 'A website service request has been saved. No email was supplied; call or text the requester using the phone number below.')
+    ? `${stored ? 'A website service request has been saved.' : 'EMAIL-ONLY REQUEST: The request dashboard was unavailable. Keep this email, follow up with the requester, and add it to the dashboard manually.'} ${lead.email ? 'Reply to this email to contact the requester, or use the phone number below.' : 'No email was supplied; call or text the requester using the phone number below.'}`
     : 'Thanks for contacting Grounds Maintenance. We received your request and will follow up to discuss the work. This is a request, not a confirmed booking.';
   const contactHTML = internal
-    ? `<p><a href="tel:${escapeHTML(String(lead.phone || '').replace(/[^+\d]/g, ''))}">Call requester</a>${lead.email ? ` · <a href="mailto:${escapeHTML(lead.email)}">Email requester</a>` : ''}</p><p><a href="https://argrounds.com/admin/leads">Open saved requests</a></p>`
+    ? `<p><a href="tel:${escapeHTML(String(lead.phone || '').replace(/[^+\d]/g, ''))}">Call requester</a>${lead.email ? ` · <a href="mailto:${escapeHTML(lead.email)}">Email requester</a>` : ''}</p><p><a href="https://argrounds.com/admin/leads">${stored ? 'Open saved requests' : 'Open dashboard to add this email-only request'}</a></p>`
     : '<p>Questions? Reply to this email, or <a href="tel:+15019610788">call</a> / <a href="sms:+15019610788">text (501) 961-0788</a>.</p>';
   const payload = {
     from: env.FROM_EMAIL,
@@ -47,6 +48,7 @@ export async function sendEmail(env, { type, lead }) {
           ...(lead.id ? { 'Idempotency-Key': `${lead.id}/${type}` } : {}),
         },
         body: JSON.stringify(payload),
+        signal: AbortSignal.timeout(10000),
       });
       if (response.ok) return response.json();
       console.error('Email delivery API status:', response.status);

@@ -43,14 +43,6 @@ export async function onRequestPost({ request, env }) {
     const supabaseUrl = env.SUPABASE_URL?.trim();
     const supabaseKey = (env.SUPABASE_ANON_KEY || env.SUPABASE_SERVICE_ROLE_KEY || '').trim();
 
-    if (!supabaseUrl || !supabaseKey) {
-      return jsonResponse(
-        env,
-        { error: 'Request service is temporarily unavailable.' },
-        { status: 503 }
-      );
-    }
-
     const record = {
       id: crypto.randomUUID(),
       name: nameValue,
@@ -81,30 +73,24 @@ export async function onRequestPost({ request, env }) {
 
     // Public form submissions need INSERT only. Returning the row also requires
     // SELECT and fails RLS for public keys. Keep customer records private.
-    const insertRes = await fetch(SUPABASE_REST(supabaseUrl), {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'apikey': supabaseKey,
-        ...(supabaseKey.startsWith('eyJ') ? { Authorization: `Bearer ${supabaseKey}` } : {}),
-        'Prefer': 'return=minimal',
-      },
-      body: JSON.stringify(record),
-    });
-
-    if (!insertRes.ok) {
-      console.error('Supabase REST insert error:', insertRes.status);
-
-      // Propagate upstream error code where possible (keep 5xx for true upstream errors)
-      const status = insertRes.status >= 400 && insertRes.status < 600 ? insertRes.status : 500;
-      return jsonResponse(
-        env,
-        {
-          error: 'Database insert failed.',
-          upstream_status: insertRes.status,
+    let stored = false;
+    try {
+      if (!supabaseUrl || !supabaseKey) throw new Error('Database configuration missing');
+      const insertRes = await fetch(SUPABASE_REST(supabaseUrl), {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'apikey': supabaseKey,
+          ...(supabaseKey.startsWith('eyJ') ? { Authorization: `Bearer ${supabaseKey}` } : {}),
+          'Prefer': 'return=minimal',
         },
-        { status }
-      );
+        body: JSON.stringify(record),
+        signal: AbortSignal.timeout(10000),
+      });
+      stored = insertRes.ok;
+      if (!stored) console.error('Supabase REST insert error:', insertRes.status);
+    } catch {
+      console.error('Database unavailable for request:', record.id);
     }
 
     // A saved request is never described as lost if email fails. The client
@@ -112,9 +98,11 @@ export async function onRequestPost({ request, env }) {
     let notificationSent = false;
     let confirmationSent = false;
     try {
-      notificationSent = !!(await sendEmail(env, { type: 'NEW_LEAD_INTERNAL', lead: record }));
+      notificationSent = !!(await sendEmail(env, {
+        type: 'NEW_LEAD_INTERNAL', lead: { ...record, storage_saved: stored },
+      }));
     } catch (emailErr) {
-      console.error('Internal notification failed for saved request:', record.id);
+      console.error('Internal notification failed for request:', record.id);
     }
     if (notificationSent && record.email) {
       try {
@@ -123,10 +111,13 @@ export async function onRequestPost({ request, env }) {
         console.error('Customer confirmation failed for saved request:', record.id);
       }
     }
+    if (!stored && !notificationSent) {
+      return jsonResponse(env, { error: 'Unable to receive the request. Please call or text us.' }, { status: 503 });
+    }
     return jsonResponse(env, {
-      success: true, captured: true, id: record.id,
+      success: true, captured: stored, id: record.id,
       notification_sent: notificationSent, confirmation_sent: confirmationSent,
-    }, { status: 201 });
+    }, { status: stored ? 201 : 202 });
 
   } catch (err) {
     const msg = err?.message || String(err);

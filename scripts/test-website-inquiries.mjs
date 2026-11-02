@@ -41,8 +41,17 @@ test('contact subject and source survive shared submission',async()=>{
  const calls=mock();await contact({request:request({name:'TEST CONTACT',phone:lead.phone,email:lead.email,subject:'Commercial property question',message:'No dispatch'}),env});
  assert.equal(calls[0].body.service,'Commercial property question');assert.equal(calls[0].body.source,'contact_form');assert.match(calls[1].body.text,/Commercial property question/);
 });
-test('database failure sends no emails and reports failure',async()=>{
- const calls=mock({dbStatus:503});const response=await onRequestPost({request:request(lead),env});assert.equal(response.status,503);assert.equal(calls.length,1);
+test('database outage falls back to complete email delivery and identifies email-only storage',async()=>{
+ const calls=mock({dbStatus:503});const response=await onRequestPost({request:request(lead),env});const result=await response.json();assert.equal(response.status,202);assert.equal(result.captured,false);assert.equal(result.notification_sent,true);assert.equal(calls.length,3);assert.match(calls[1].body.text,/EMAIL-ONLY REQUEST/);assert.match(calls[1].body.text,/small/);assert.match(calls[1].body.text,/afternoon/);assert.ok(!calls[1].body.text.includes('request has been saved'));
+});
+test('simultaneous database and email failure never reports success',async()=>{
+ const calls=mock({dbStatus:503,mailStatus:401});const response=await onRequestPost({request:request(lead),env});assert.equal(response.status,503);assert.equal(calls.length,2);
+});
+test('database network failure and missing configuration both use the email fallback',async()=>{
+ for(const missing of [false,true]){
+  const calls=mock();const orig=globalThis.fetch;globalThis.fetch=async(url,init)=>{if(String(url).includes('/rest/'))throw new TypeError('network failed');return orig(url,init);};
+  const response=await onRequestPost({request:request(lead),env:missing?{...env,SUPABASE_URL:''}:env});assert.equal(response.status,202);assert.equal((await response.json()).notification_sent,true);assert.equal(calls.length,2);
+ }
 });
 test('notification failure preserves saved record and reports partial delivery',async()=>{
  const calls=mock({mailStatus:401});const response=await onRequestPost({request:request(lead),env});const result=await response.json();assert.equal(result.captured,true);assert.equal(result.notification_sent,false);assert.equal(result.confirmation_sent,false);assert.equal(calls.length,2);
