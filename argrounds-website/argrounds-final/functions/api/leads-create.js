@@ -62,7 +62,7 @@ export async function onRequestPost({ request, env }) {
       timing: body.timing || null,
       message: body.message || null,
       status: 'new',
-      source: body.subject || body.source === 'contact_form' ? 'contact_form' : 'quote_form',
+      source: body.subject ? 'contact_form' : (body.source || 'quote_form'),
       // Attribution
       landing_page: body.landing_page || null,
       referrer: body.referrer || null,

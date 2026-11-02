@@ -65,3 +65,7 @@ test('CRM queries use the verified user token, not the public role',async()=>{
 test('phone-only requests send one actionable business notification',async()=>{
  const calls=mock();const response=await onRequestPost({request:request({...lead,email:''}),env});const result=await response.json();assert.equal(result.notification_sent,true);assert.equal(result.confirmation_sent,false);assert.equal(calls.length,2);assert.match(calls[1].body.text,/No email was supplied; call or text/);
 });
+
+test('manual CRM entries preserve their source attribution',async()=>{
+ const calls=mock();await onRequestPost({request:request({...lead,source:'manual'}),env});assert.equal(calls[0].body.source,'manual');
+});
