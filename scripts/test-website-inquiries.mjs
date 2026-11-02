@@ -61,3 +61,7 @@ test('CRM queries use the verified user token, not the public role',async()=>{
  const calls=[];globalThis.fetch=async(url,init)=>{calls.push({url:String(url),headers:new Headers(init.headers)});return new Response(JSON.stringify(String(url).includes('/auth/v1/user')?{id:'test-user',role:'authenticated',email:'test@example.com'}:[]),{status:200,headers:{'content-type':'application/json','content-range':'0-0/0'}});};
  const response=await listLeads({request:new Request('https://argrounds.com/api/leads-list',{headers:{Authorization:'Bearer valid-test-session'}}),env});assert.equal(response.status,200);assert.equal(calls.length,2);assert.equal(calls[1].headers.get('Authorization'),'Bearer valid-test-session');
 });
+
+test('phone-only requests send one actionable business notification',async()=>{
+ const calls=mock();const response=await onRequestPost({request:request({...lead,email:''}),env});const result=await response.json();assert.equal(result.notification_sent,true);assert.equal(result.confirmation_sent,false);assert.equal(calls.length,2);assert.match(calls[1].body.text,/No email was supplied; call or text/);
+});

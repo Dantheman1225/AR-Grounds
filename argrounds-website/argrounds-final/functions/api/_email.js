@@ -23,7 +23,7 @@ export async function sendEmail(env, { type, lead }) {
   const detailsHTML = fields.map(([label, value]) => `<p><strong>${label}:</strong> ${escapeHTML(value || 'Not provided').replace(/\n/g, '<br>')}</p>`).join('\n');
   const subject = internal ? `New Lead: ${name || 'Website Visitor'}` : 'Your Quote Request - Grounds Maintenance';
   const intro = internal
-    ? 'A website service request has been saved. Reply to this email to contact the requester, or use the phone number below.'
+    ? (lead.email ? 'A website service request has been saved. Reply to this email to contact the requester, or use the phone number below.' : 'A website service request has been saved. No email was supplied; call or text the requester using the phone number below.')
     : 'Thanks for contacting Grounds Maintenance. We received your request and will follow up to discuss the work. This is a request, not a confirmed booking.';
   const contactHTML = internal
     ? `<p><a href="tel:${escapeHTML(String(lead.phone || '').replace(/[^+\d]/g, ''))}">Call requester</a>${lead.email ? ` · <a href="mailto:${escapeHTML(lead.email)}">Email requester</a>` : ''}</p><p><a href="https://argrounds.com/admin/leads">Open saved requests</a></p>`
