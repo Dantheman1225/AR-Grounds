@@ -6,7 +6,7 @@ import { createClient } from '@supabase/supabase-js';
 
 export async function onRequestGet({ request, env }) {
   try {
-    if (!env.SUPABASE_URL || !env.SUPABASE_SERVICE_ROLE_KEY) {
+    if (!env.SUPABASE_URL || !(env.SUPABASE_ANON_KEY || env.SUPABASE_SERVICE_ROLE_KEY)) {
       return new Response(JSON.stringify({ error: 'Database configuration missing.' }), { status: 500 });
     }
 
@@ -16,7 +16,8 @@ export async function onRequestGet({ request, env }) {
     }
 
     const token = authHeader.split(' ')[1];
-    const supabase = createClient(env.SUPABASE_URL, env.SUPABASE_SERVICE_ROLE_KEY, {
+    const supabase = createClient(env.SUPABASE_URL, env.SUPABASE_ANON_KEY || env.SUPABASE_SERVICE_ROLE_KEY, {
+      global: { headers: { Authorization: authHeader } },
       auth: { persistSession: false, autoRefreshToken: false }
     });
 

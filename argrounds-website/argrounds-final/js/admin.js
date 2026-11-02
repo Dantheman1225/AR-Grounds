@@ -43,9 +43,13 @@ import { supabase } from './auth.js';
       return currentLeads;
     } catch (err) {
       console.error('Failed to fetch leads:', err);
-      return [];
+      throw err;
     }
   }
+
+  const escapeHTML = (value) => String(value ?? '').replace(/[&<>"']/g, c => ({
+    '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;',
+  }[c]));
 
   // ── HELPERS ──────────────────────────────────────────────────────────────
   function formatDate(iso) {
@@ -107,7 +111,7 @@ import { supabase } from './auth.js';
   }
 
   function leadFormHTML(lead) {
-    const v = (k) => lead[k] || '';
+    const v = (k) => escapeHTML(lead[k] || '');
     // simple heuristic to split name
     let fn = lead.first_name || '';
     let ln = lead.last_name || '';
@@ -117,6 +121,8 @@ import { supabase } from './auth.js';
       ln = parts.slice(1).join(' ');
     }
 
+    fn = escapeHTML(fn);
+    ln = escapeHTML(ln);
     return `
       <div class="admin-form" style="display:grid;grid-template-columns:1fr 1fr;gap:16px;">
         <div class="admin-field">
@@ -142,10 +148,18 @@ import { supabase } from './auth.js';
         <div class="admin-field">
           <label>Service Requested</label>
           <select id="lf_service">
+            ${lead.service && !['driveway','sidewalk','bundle','unsure','commercial-grounds','residential-lawn','property-cleanup','hedges-shrubs','pressure-washing','multi-site','multiple'].includes(lead.service) ? `<option value="${v('service')}" selected>${v('service')}</option>` : ''}
             <option value="">— Select —</option>
             <option value="driveway" ${v('service')==='driveway'?'selected':''}>Driveway Cleaning</option>
             <option value="sidewalk" ${v('service')==='sidewalk'?'selected':''}>Sidewalk Cleaning</option>
             <option value="bundle" ${v('service')==='bundle'?'selected':''}>Driveway + Walkway Bundle</option>
+            <option value="commercial-grounds" ${v('service')==='commercial-grounds'?'selected':''}>Commercial grounds</option>
+            <option value="residential-lawn" ${v('service')==='residential-lawn'?'selected':''}>Residential lawn</option>
+            <option value="property-cleanup" ${v('service')==='property-cleanup'?'selected':''}>Property cleanup</option>
+            <option value="hedges-shrubs" ${v('service')==='hedges-shrubs'?'selected':''}>Hedges and shrubs</option>
+            <option value="pressure-washing" ${v('service')==='pressure-washing'?'selected':''}>Pressure washing</option>
+            <option value="multi-site" ${v('service')==='multi-site'?'selected':''}>Multiple locations</option>
+            <option value="multiple" ${v('service')==='multiple'?'selected':''}>Multiple services</option>
             <option value="unsure" ${v('service')==='unsure'?'selected':''}>Not sure</option>
           </select>
         </div>
@@ -159,6 +173,7 @@ import { supabase } from './auth.js';
           </select>
         </div>
         <div class="admin-field" style="grid-column:1/-1">
+          <p>Property size: ${v('size') || 'Not provided'} · Preferred callback: ${v('timing') || 'Any time'}</p>
           <label>Notes</label>
           <textarea id="lf_message" rows="3" placeholder="Job notes, special instructions…" style="background:var(--admin-surface-2);border:1px solid var(--admin-border);border-radius:8px;padding:11px 14px;color:var(--admin-text);font-family:inherit;font-size:0.9rem;resize:vertical;width:100%">${v('message')}</textarea>
         </div>
@@ -210,6 +225,7 @@ import { supabase } from './auth.js';
       if (!data) return false;
       try {
         data.id = id; // attach ID for update
+        data.source = lead.source;
         await apiRequest('/api/leads-update', 'PUT', data);
         await reloadData();
         return true;
@@ -240,10 +256,10 @@ import { supabase } from './auth.js';
 
     tbody.innerHTML = currentLeads.slice(0, 5).map((s) => `
       <tr>
-        <td><strong>${s.name || '—'}</strong></td>
-        <td><a href="tel:${s.phone}" style="color:var(--admin-accent-light)">${s.phone || '—'}</a></td>
-        <td>${s.service || '—'}</td>
-        <td>${s.address || '—'}</td>
+        <td><strong>${escapeHTML(s.name || '—')}</strong></td>
+        <td><a href="tel:${escapeHTML(s.phone)}" style="color:var(--admin-accent-light)">${escapeHTML(s.phone || '—')}</a></td>
+        <td>${escapeHTML(s.service || '—')}</td>
+        <td>${escapeHTML(s.address || '—')}</td>
         <td>${badgeFor(s.status || 'new')}</td>
         <td>${formatDate(s.created_at)}</td>
         <td><button class="admin-btn admin-btn-ghost admin-btn-sm" data-edit="${s.id}">Edit</button></td>
@@ -274,10 +290,10 @@ import { supabase } from './auth.js';
 
     tbody.innerHTML = currentLeads.map((s) => `
       <tr>
-        <td><strong>${s.name || '—'}</strong></td>
-        <td><a href="tel:${s.phone}" style="color:var(--admin-accent-light)">${s.phone || '—'}</a></td>
-        <td>${s.service || '—'}</td>
-        <td>${s.address || '—'}</td>
+        <td><strong>${escapeHTML(s.name || '—')}</strong></td>
+        <td><a href="tel:${escapeHTML(s.phone)}" style="color:var(--admin-accent-light)">${escapeHTML(s.phone || '—')}</a></td>
+        <td>${escapeHTML(s.service || '—')}</td>
+        <td>${escapeHTML(s.address || '—')}</td>
         <td>${badgeFor(s.status || 'new')}</td>
         <td>${formatDate(s.created_at)}</td>
         <td style="white-space:nowrap">
@@ -309,7 +325,15 @@ import { supabase } from './auth.js';
 
   // Load Data and route
   async function reloadData() {
-    await fetchLeads();
+    try {
+      await fetchLeads();
+    } catch {
+      for (const id of ['leadsBody', 'recentLeadsBody']) {
+        const body = document.getElementById(id);
+        if (body) body.innerHTML = '<tr><td colspan="7" role="alert">Requests could not be loaded. Refresh the page or sign in again. This does not mean there are no requests.</td></tr>';
+      }
+      return;
+    }
     const path = window.location.pathname;
     if (path.includes('dashboard')) loadDashboard();
     if (path.includes('leads')) loadLeads();

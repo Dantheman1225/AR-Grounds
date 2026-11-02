@@ -3,9 +3,7 @@
    Handles quote form validation & submission.
    Works on: quote.html, contact.html, gallery.html
    
-   Backend: stub — redirects to thank-you.html
-   When you're ready to add a real API, replace the
-   submitForm() function body with a fetch() call.
+   Saves the request and checks notification delivery before redirecting.
    ================================================ */
 
 (function () {
@@ -16,6 +14,34 @@
 
   const submitBtn = document.getElementById('submitBtn');
   const successEl = document.getElementById('formSuccess');
+  const defaultButtonText = submitBtn?.querySelector('.submit-text')?.textContent || 'Send Request';
+  function readSession(key) { try { return sessionStorage.getItem(key); } catch { return null; } }
+  function writeSession(key, value) { try { sessionStorage.setItem(key, value); } catch {} }
+
+  function showDeliveryMessage(saved) {
+    let message = form.querySelector('.submit-error');
+    if (!message) {
+      message = document.createElement('div');
+      message.className = 'submit-error field-error-msg';
+      message.style.marginBottom = '12px';
+      message.style.fontSize = '1rem';
+      message.setAttribute('role', 'alert');
+      message.tabIndex = -1;
+      submitBtn.parentElement.insertBefore(message, submitBtn);
+    }
+    message.replaceChildren(document.createTextNode(saved
+      ? 'Your request was saved, but our email alert could not be sent. Please call or text us to arrange follow-up. You do not need to submit again. '
+      : 'We could not confirm your request. Your details are still here. Try again, or contact us directly: '));
+    for (const [label, href] of [['Call (501) 961-0788', 'tel:+15019610788'], ['Text us', 'sms:+15019610788']]) {
+      const link = document.createElement('a');
+      link.textContent = label;
+      link.href = href;
+      link.style.display = 'inline-block';
+      link.style.padding = '12px 8px';
+      message.append(link);
+    }
+    message.focus();
+  }
 
   // ── VALIDATION ─────────────────────────────────────────────────────────────
 
@@ -104,6 +130,7 @@
     }
 
     setLoading(true);
+    form.querySelector('.submit-error')?.remove();
 
     // Collect data
     const data = Object.fromEntries(new FormData(form));
@@ -112,7 +139,7 @@
     // ── ATTRIBUTION DATA ────────────────────────────────────────────────────────
     const urlParams = new URLSearchParams(window.location.search);
     const attributionData = {
-      landing_page: sessionStorage.getItem('ar_landing_page') || window.location.pathname,
+      landing_page: readSession('ar_landing_page') || window.location.pathname,
       referrer: document.referrer || null,
       utm_source: urlParams.get('utm_source') || null,
       utm_medium: urlParams.get('utm_medium') || null,
@@ -125,7 +152,7 @@
       session_id: getCookie('_ga_session') || null, // Assuming standard GA naming, adjust as needed
       user_agent: navigator.userAgent,
       page_path: window.location.pathname,
-      source: 'quote_form'
+      source: form.querySelector('[name="subject"]') ? 'contact_form' : 'quote_form'
     };
 
     function getCookie(name) {
@@ -148,25 +175,23 @@
         console.error('Lead API error:', res.status, errText);
         throw new Error(`Lead API error (${res.status}): ${errText || 'Server error'}`);
       }
+      const result = await res.json();
+      if (result.captured && result.notification_sent === false) {
+        setLoading(false);
+        submitBtn.disabled = true;
+        showDeliveryMessage(true);
+        return;
+      }
 
       // Store name so thank-you page can personalize
       const name = data.first_name || data.name || '';
-      if (name) sessionStorage.setItem('ar_submitted_name', name.split(' ')[0]);
+      if (name) writeSession('ar_submitted_name', name.split(' ')[0]);
 
       window.location.href = redirectUrl;
     } catch (err) {
       console.error('Form submission error:', err);
       setLoading(false);
-      // Show error directly above the button
-      let submitErr = form.querySelector('.submit-error');
-      if (!submitErr) {
-        submitErr = document.createElement('div');
-        submitErr.className = 'submit-error field-error-msg';
-        submitErr.style.marginBottom = '12px';
-        submitErr.style.fontSize = '1rem';
-        submitBtn.parentElement.insertBefore(submitErr, submitBtn);
-      }
-      submitErr.textContent = 'Oops! Something went wrong. Please call us or try again later.';
+      showDeliveryMessage(false);
     }
   });
 
@@ -176,7 +201,7 @@
     const textEl = submitBtn.querySelector('.submit-text');
     submitBtn.disabled = loading;
     submitBtn.style.opacity = loading ? '0.75' : '1';
-    if (textEl) textEl.textContent = loading ? 'Sending…' : 'Send My Free Quote Request';
+    if (textEl) textEl.textContent = loading ? 'Sending…' : defaultButtonText;
   }
 
   function delay(ms) {
