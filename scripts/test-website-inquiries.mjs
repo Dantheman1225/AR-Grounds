@@ -34,7 +34,7 @@ test('quote saves complete record with INSERT-only access and sends actionable r
  assert.equal(response.status,201);assert.equal(result.notification_sent,true);assert.equal(result.confirmation_sent,true);
  const row=calls[0].body;assert.equal(row.id,result.id);for(const k of ['phone','email','address','service','size','timing','message','page_path'])assert.equal(row[k],lead[k]);
  assert.equal(row.name,'TEST ONLY');assert.equal(calls[0].headers.Authorization,undefined);
- const email=calls[1].body;assert.equal(email.to,env.ADMIN_EMAIL);assert.equal(email.reply_to,lead.email);assert.match(email.text,/small/);assert.match(email.text,/afternoon/);assert.match(email.text,/TEST — DO NOT DISPATCH/);assert.match(email.html,/&lt;img/);assert.ok(!email.html.includes('<img'));
+ const email=calls[1].body;assert.equal(email.to,env.ADMIN_EMAIL);assert.equal(email.reply_to,lead.email);assert.match(email.text,/small/);assert.match(email.text,/Afternoon/);assert.match(email.text,/TEST — DO NOT DISPATCH/);assert.match(email.html,/&lt;img/);assert.ok(!email.html.includes('<img src=x'));
  assert.equal(calls[2].body.reply_to,env.ADMIN_EMAIL);assert.equal(calls[2].body.to,lead.email);
 });
 test('contact subject and source survive shared submission',async()=>{
@@ -42,7 +42,7 @@ test('contact subject and source survive shared submission',async()=>{
  assert.equal(calls[0].body.service,'Commercial property question');assert.equal(calls[0].body.source,'contact_form');assert.match(calls[1].body.text,/Commercial property question/);
 });
 test('database outage falls back to complete email delivery and identifies email-only storage',async()=>{
- const calls=mock({dbStatus:503});const response=await onRequestPost({request:request(lead),env});const result=await response.json();assert.equal(response.status,202);assert.equal(result.captured,false);assert.equal(result.notification_sent,true);assert.equal(calls.length,3);assert.match(calls[1].body.text,/EMAIL-ONLY REQUEST/);assert.match(calls[1].body.text,/small/);assert.match(calls[1].body.text,/afternoon/);assert.ok(!calls[1].body.text.includes('request has been saved'));
+ const calls=mock({dbStatus:503});const response=await onRequestPost({request:request(lead),env});const result=await response.json();assert.equal(response.status,202);assert.equal(result.captured,false);assert.equal(result.notification_sent,true);assert.equal(calls.length,3);assert.match(calls[1].body.text,/EMAIL-ONLY REQUEST/);assert.match(calls[1].body.text,/small/);assert.match(calls[1].body.text,/Afternoon/);assert.ok(!calls[1].body.text.includes('request has been saved'));
 });
 test('simultaneous database and email failure never reports success',async()=>{
  const calls=mock({dbStatus:503,mailStatus:401});const response=await onRequestPost({request:request(lead),env});assert.equal(response.status,503);assert.equal(calls.length,2);
@@ -77,4 +77,17 @@ test('phone-only requests send one actionable business notification',async()=>{
 
 test('manual CRM entries preserve their source attribution',async()=>{
  const calls=mock();await onRequestPost({request:request({...lead,source:'manual'}),env});assert.equal(calls[0].body.source,'manual');
+});
+
+// The branded templates must retain full details and work without their images.
+test('customer receipt preserves details and routes photos and calls to the business',async()=>{
+ const calls=mock();await onRequestPost({request:request(lead),env});const receipt=calls[2].body;
+ for(const value of ['TEST ONLY',lead.phone,lead.email,lead.address,lead.message])assert.ok(receipt.text.includes(value));
+ assert.match(receipt.html,/LET’S GET YOUR/);assert.match(receipt.html,/href="tel:\+15019610788"/);assert.match(receipt.html,/href="sms:\+15019610788"/);assert.match(receipt.html,/mailto:grounds.helpme@gmail.com\?subject=Property%20photos/);
+ assert.match(receipt.text,/appointment will be confirmed separately/);assert.ok(!receipt.html.includes('WEBSITE SOURCE'));assert.match(receipt.html,/&lt;img src=x/);
+ assert.ok(Buffer.byteLength(receipt.html)<20000);
+});
+test('visitor text cannot inject HTML into the branded heading or links',async()=>{
+ const calls=mock();await onRequestPost({request:request({...lead,first_name:'<script>alert(1)</script>',service:'<b>Custom job</b>',email:'quote"x@example.com'}),env});
+ for(const call of calls.slice(1)){assert.ok(!call.body.html.includes('<script>'));assert.ok(!call.body.html.includes('<b>Custom job</b>'));assert.match(call.body.html,/&lt;b&gt;Custom job/);assert.ok(!call.body.html.includes('href="mailto:quote"'));}
 });
