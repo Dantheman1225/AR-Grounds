@@ -68,6 +68,77 @@ function sorted(values) {
   return [...values].sort((a, b) => a.localeCompare(b));
 }
 
+// Ignore examples in scripts/comments; check actual customer-facing anchors.
+function markupOnly(html) {
+  return html.replace(/<!--[\s\S]*?-->|<script\b[^>]*>[\s\S]*?<\/script>/gi, '');
+}
+
+function decodeAttribute(value) {
+  return value.replace(/&(?:amp|quot|apos|lt|gt|#\d+|#x[\da-f]+);/gi, (entity) => {
+    const named = { '&amp;': '&', '&quot;': '"', '&apos;': "'", '&lt;': '<', '&gt;': '>' };
+    if (named[entity.toLowerCase()]) return named[entity.toLowerCase()];
+    const hex = entity.toLowerCase().startsWith('&#x');
+    const code = parseInt(entity.slice(hex ? 3 : 2, -1), hex ? 16 : 10);
+    return code <= 0x10ffff ? String.fromCodePoint(code) : entity;
+  });
+}
+
+function resolvePage(pathname) {
+  let decoded;
+  try { decoded = decodeURIComponent(pathname); } catch { return null; }
+  const target = path.resolve(siteRoot, `.${decoded}`);
+  if (target !== siteRoot && !target.startsWith(siteRoot + path.sep)) return null;
+  return [target, `${target}.html`, path.join(target, 'index.html')]
+    .find((candidate) => fs.existsSync(candidate) && fs.statSync(candidate).isFile()) || null;
+}
+
+function checkNavigation(html, route, relative) {
+  const markup = markupOnly(html);
+  const base = new URL(route, 'https://argrounds.com');
+  for (const match of markup.matchAll(/<a\b[^>]*\bhref\s*=\s*(["'])(.*?)\1/gi)) {
+    const href = decodeAttribute(match[2]);
+    let url;
+    try { url = new URL(href, base); } catch {
+      errors.push(`${relative}: invalid link ${href}`);
+      continue;
+    }
+    if (!['http:', 'https:'].includes(url.protocol) ||
+        !['argrounds.com', 'www.argrounds.com'].includes(url.hostname)) continue;
+    const target = resolvePage(url.pathname);
+    if (!target) {
+      errors.push(`${relative}: missing internal destination ${href}`);
+      continue;
+    }
+    if (url.hash && target.endsWith('.html')) {
+      let fragment;
+      try { fragment = decodeURIComponent(url.hash.slice(1)); } catch {
+        errors.push(`${relative}: invalid fragment ${href}`);
+        continue;
+      }
+      // Text fragments do not refer to element IDs.
+      fragment = fragment.split(':~:text=')[0];
+      if (!fragment) continue;
+      const targetMarkup = markupOnly(fs.readFileSync(target, 'utf8'));
+      const ids = [...targetMarkup.matchAll(/\bid\s*=\s*(["'])(.*?)\1/gi)]
+        .map((entry) => decodeAttribute(entry[2]));
+      const names = [...targetMarkup.matchAll(/<a\b[^>]*\bname\s*=\s*(["'])(.*?)\1/gi)]
+        .map((entry) => decodeAttribute(entry[2]));
+      if (!ids.includes(fragment) && !names.includes(fragment)) {
+        errors.push(`${relative}: missing fragment target ${href}`);
+      }
+    }
+  }
+
+  const footer = markup.match(/<footer\b[\s\S]*?<div\b[^>]*class=["'][^"']*\bfooter-brand\b[^"']*["'][^>]*>\s*<a\b[^>]*href=(["'])(.*?)\1/i);
+  if (footer) {
+    let home;
+    try { home = new URL(decodeAttribute(footer[2]), base); } catch { return; }
+    if (home.origin !== base.origin || home.pathname !== '/' || home.search || home.hash) {
+      errors.push(`${relative}: footer brand must link directly to /, found ${footer[2]}`);
+    }
+  }
+}
+
 if (!fs.existsSync(siteRoot)) {
   console.error(`Site root not found: ${siteRoot}`);
   process.exit(1);
@@ -83,6 +154,7 @@ for (const filePath of htmlFiles) {
 
   const html = fs.readFileSync(filePath, 'utf8');
   const relative = path.relative(repoRoot, filePath).split(path.sep).join('/');
+  checkNavigation(html, route, relative);
   const title = getTagContent(html, /<title[^>]*>([\s\S]*?)<\/title>/i);
   const description = getTagContent(
     html,
